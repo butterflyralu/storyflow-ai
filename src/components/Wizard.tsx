@@ -2,9 +2,10 @@ import { useWizard } from '@/context/WizardContext';
 import { ContextWizard } from '@/components/ContextWizard';
 import { ChatPanel } from '@/components/ChatPanel';
 import { StoryPreview } from '@/components/StoryPreview';
+import { SplitStoriesView } from '@/components/SplitStoriesView';
 
 export function Wizard() {
-  const { step } = useWizard();
+  const { step, splitStories } = useWizard();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -34,8 +35,8 @@ export function Wizard() {
             <div className="flex w-1/2 flex-col border-r border-border">
               <ChatPanel />
             </div>
-            <div className="w-1/2 overflow-y-auto bg-muted/30 p-5">
-              <StoryPreview />
+            <div className="w-1/2 overflow-y-auto bg-muted/30">
+              {splitStories.length > 0 ? <SplitStoriesView /> : <div className="p-5"><StoryPreview /></div>}
             </div>
           </div>
         )}

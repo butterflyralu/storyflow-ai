@@ -1,0 +1,235 @@
+import { useState } from 'react';
+import { useWizard } from '@/context/WizardContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
+import { ArrowLeft, Save, Trash2, X } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import type { StoryDraft } from '@/services/types';
+
+function StoryCard({
+  story,
+  index,
+  total,
+  onUpdate,
+  onRemove,
+}: {
+  story: StoryDraft;
+  index: number;
+  total: number;
+  onUpdate: (update: Partial<StoryDraft>) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <Card className="flex h-full flex-col border shadow-md">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <Badge variant="outline" className="text-xs">
+            {index + 1} of {total}
+          </Badge>
+          <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={onRemove}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        <input
+          value={story.title}
+          onChange={e => onUpdate({ title: e.target.value })}
+          className="mt-1 w-full border-0 bg-transparent text-base font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
+          placeholder="Story title..."
+        />
+      </CardHeader>
+      <CardContent className="flex-1 space-y-3 overflow-y-auto">
+        {/* User Story */}
+        <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-1 text-sm">
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-semibold text-foreground">As a</span>
+            <input
+              value={story.asA}
+              onChange={e => onUpdate({ asA: e.target.value })}
+              className="flex-1 border-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              placeholder="[role]"
+            />
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-semibold text-foreground">I want to</span>
+            <input
+              value={story.iWant}
+              onChange={e => onUpdate({ iWant: e.target.value })}
+              className="flex-1 border-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              placeholder="[capability]"
+            />
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-semibold text-foreground">So that</span>
+            <input
+              value={story.soThat}
+              onChange={e => onUpdate({ soThat: e.target.value })}
+              className="flex-1 border-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              placeholder="[value]"
+            />
+          </div>
+        </div>
+
+        {/* Description */}
+        <div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</div>
+          <textarea
+            value={story.description}
+            onChange={e => onUpdate({ description: e.target.value })}
+            className="w-full resize-y rounded border-0 bg-transparent px-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-h-[3rem]"
+            placeholder="Story description..."
+            rows={3}
+          />
+        </div>
+
+        {/* Acceptance Criteria */}
+        <div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Acceptance Criteria</div>
+          {story.acceptanceCriteria.length > 0 ? (
+            <div className="space-y-2">
+              {story.acceptanceCriteria.map((group, gi) => (
+                <div key={gi}>
+                  <div className="text-xs font-medium text-muted-foreground">{group.category}</div>
+                  <ul className="space-y-0.5">
+                    {group.items.map((item, ii) => (
+                      <li key={ii} className="flex items-start gap-1.5 text-sm text-foreground">
+                        <span className="mt-0.5 text-primary">✓</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm italic text-muted-foreground">
+              No criteria yet — discuss this story in chat to add them.
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function SplitStoriesView() {
+  const {
+    splitStories,
+    activeSplitIndex,
+    setActiveSplitIndex,
+    updateSplitStory,
+    removeSplitStory,
+    epicSummary,
+    clearSplit,
+    saveStory,
+    addMessage,
+    story: originalStory,
+  } = useWizard();
+
+  const [saving, setSaving] = useState(false);
+
+  if (splitStories.length === 0) return null;
+
+  const handleSaveAll = async () => {
+    setSaving(true);
+    splitStories.forEach(s => saveStory(s));
+    await new Promise(r => setTimeout(r, 400));
+    setSaving(false);
+    toast({ title: '✅ All stories saved!', description: `${splitStories.length} stories have been saved.` });
+    addMessage({
+      id: String(Date.now()),
+      role: 'assistant',
+      content: `Saved ${splitStories.length} stories from the epic split. Want to start working on a new story?`,
+      options: [{ label: 'Start a new story' }],
+    });
+    clearSplit();
+  };
+
+  const handleRemove = (index: number) => {
+    if (splitStories.length <= 1) {
+      toast({ title: 'Cannot remove', description: 'You need at least one story.' });
+      return;
+    }
+    removeSplitStory(index);
+    toast({ title: 'Removed', description: `Story ${index + 1} removed.` });
+  };
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Sticky epic header */}
+      <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm px-5 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
+              Epic: {originalStory.title}
+            </div>
+            {epicSummary && (
+              <p className="text-sm text-muted-foreground truncate">{epicSummary}</p>
+            )}
+          </div>
+          <Button size="sm" variant="ghost" onClick={clearSplit} className="ml-3 gap-1.5 text-xs">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to original
+          </Button>
+        </div>
+      </div>
+
+      {/* Carousel */}
+      <div className="flex-1 px-10 py-5">
+        <Carousel
+          opts={{ align: 'center', loop: false }}
+          className="w-full"
+          setApi={(api) => {
+            api?.on('select', () => {
+              setActiveSplitIndex(api.selectedScrollSnap());
+            });
+          }}
+        >
+          <CarouselContent>
+            {splitStories.map((s, i) => (
+              <CarouselItem key={i} className="basis-[85%] md:basis-[75%]">
+                <div className="h-[calc(100vh-220px)]">
+                  <StoryCard
+                    story={s}
+                    index={i}
+                    total={splitStories.length}
+                    onUpdate={(update) => updateSplitStory(i, update)}
+                    onRemove={() => handleRemove(i)}
+                  />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="-left-4" />
+          <CarouselNext className="-right-4" />
+        </Carousel>
+
+        {/* Dot indicators */}
+        <div className="flex items-center justify-center gap-1.5 mt-4">
+          {splitStories.map((_, i) => (
+            <button
+              key={i}
+              className={`h-2 w-2 rounded-full transition-colors ${
+                i === activeSplitIndex ? 'bg-primary' : 'bg-muted-foreground/30'
+              }`}
+              onClick={() => setActiveSplitIndex(i)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Action bar */}
+      <div className="border-t border-border bg-card px-5 py-3 flex gap-2">
+        <Button onClick={handleSaveAll} disabled={saving} className="flex-1 gap-1.5">
+          <Save className="h-4 w-4" />
+          {saving ? 'Saving...' : `Save All ${splitStories.length} Stories`}
+        </Button>
+        <Button variant="secondary" onClick={clearSplit} className="gap-1.5">
+          <X className="h-4 w-4" />
+          Discard Split
+        </Button>
+      </div>
+    </div>
+  );
+}

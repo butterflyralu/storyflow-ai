@@ -17,6 +17,9 @@ interface WizardState {
   chatHistory: UIChatMessage[];
   evaluation: EvaluateResponse | null;
   savedStories: StoryDraft[];
+  splitStories: StoryDraft[];
+  activeSplitIndex: number;
+  epicSummary: string | null;
 }
 
 interface WizardActions {
@@ -29,6 +32,12 @@ interface WizardActions {
   setEvaluation: (result: EvaluateResponse | null) => void;
   saveStory: (story: StoryDraft) => void;
   resetStory: () => void;
+  setSplitStories: (stories: StoryDraft[]) => void;
+  setActiveSplitIndex: (index: number) => void;
+  updateSplitStory: (index: number, update: Partial<StoryDraft>) => void;
+  setEpicSummary: (summary: string | null) => void;
+  clearSplit: () => void;
+  removeSplitStory: (index: number) => void;
 }
 
 const WizardContext = createContext<(WizardState & WizardActions) | null>(null);
@@ -42,6 +51,9 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
   const [chatHistory, setChatHistory] = useState<UIChatMessage[]>([]);
   const [evaluation, setEvaluation] = useState<EvaluateResponse | null>(null);
   const [savedStories, setSavedStories] = useState<StoryDraft[]>([]);
+  const [splitStories, setSplitStoriesState] = useState<StoryDraft[]>([]);
+  const [activeSplitIndex, setActiveSplitIndex] = useState(0);
+  const [epicSummary, setEpicSummary] = useState<string | null>(null);
 
   const updateStory = useCallback((update: Partial<StoryDraft>) => {
     setStoryState(prev => ({ ...prev, ...update }));
@@ -61,8 +73,31 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     setStoryState(EMPTY_STORY);
     setChatHistory([]);
     setEvaluation(null);
+    setSplitStoriesState([]);
+    setActiveSplitIndex(0);
+    setEpicSummary(null);
     setStep(2);
   }, []);
+
+  const setSplitStories = useCallback((stories: StoryDraft[]) => {
+    setSplitStoriesState(stories);
+    setActiveSplitIndex(0);
+  }, []);
+
+  const updateSplitStory = useCallback((index: number, update: Partial<StoryDraft>) => {
+    setSplitStoriesState(prev => prev.map((s, i) => i === index ? { ...s, ...update } : s));
+  }, []);
+
+  const clearSplit = useCallback(() => {
+    setSplitStoriesState([]);
+    setActiveSplitIndex(0);
+    setEpicSummary(null);
+  }, []);
+
+  const removeSplitStory = useCallback((index: number) => {
+    setSplitStoriesState(prev => prev.filter((_, i) => i !== index));
+    setActiveSplitIndex(prev => Math.min(prev, Math.max(0, splitStories.length - 2)));
+  }, [splitStories.length]);
 
   return (
     <WizardContext.Provider
@@ -76,6 +111,11 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
         evaluation, setEvaluation,
         savedStories, saveStory,
         resetStory,
+        splitStories, setSplitStories,
+        activeSplitIndex, setActiveSplitIndex,
+        updateSplitStory, clearSplit,
+        epicSummary, setEpicSummary,
+        removeSplitStory,
       }}
     >
       {children}

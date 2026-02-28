@@ -10,6 +10,8 @@ import {
   SaveChecklistItemResponse,
   SaveContextRequest,
   SaveContextResponse,
+  SplitStoryRequest,
+  SplitStoryResponse,
   StoryAgentRequest,
   StoryAgentResponse,
   UpdateContextRequest,
@@ -381,5 +383,24 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     });
+  },
+
+  async splitStory(input: SplitStoryRequest): Promise<SplitStoryResponse> {
+    const { data, error } = await supabase.functions.invoke('split-story', {
+      body: {
+        story: input.story,
+        agentContext: input.agentContext,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Split story request failed');
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return data as SplitStoryResponse;
   },
 };
