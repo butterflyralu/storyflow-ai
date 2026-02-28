@@ -10,11 +10,13 @@ export function Wizard() {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b border-border bg-card/80 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl">
-          <div className="flex items-center justify-between px-6 py-3">
-            <h1 className="text-lg font-bold tracking-tight text-foreground">
+          <div className="flex items-center justify-between px-6 py-4">
+            <h1 className="font-display text-xl font-bold tracking-tight text-foreground">
               PO Agent
             </h1>
-            <div className="text-xs text-muted-foreground">AI Story Assistant</div>
+            <div className="rounded-full bg-peach-light px-3 py-1 text-xs font-medium text-peach">
+              AI Story Assistant
+            </div>
           </div>
         </div>
       </header>
@@ -23,11 +25,11 @@ export function Wizard() {
         {step === 1 && <ContextWizard />}
 
         {step === 2 && (
-          <div className="flex h-[calc(100vh-64px)]">
+          <div className="flex h-[calc(100vh-68px)]">
             <div className="flex w-1/2 flex-col border-r border-border">
               <ChatPanel />
             </div>
-            <div className="w-1/2 overflow-y-auto p-4">
+            <div className="w-1/2 overflow-y-auto bg-muted/30 p-5">
               <StoryPreview />
             </div>
           </div>
