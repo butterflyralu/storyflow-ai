@@ -34,11 +34,12 @@ function getImprovedText(field: StoryField, improved: StoryDraft): string | null
 }
 
 function InlineAnnotation({
-  item, improvedStory, onApply,
+  item, improvedStory, onApply, onDismiss,
 }: {
   item: EvaluationScorecardItem;
   improvedStory?: StoryDraft;
   onApply?: () => void;
+  onDismiss?: () => void;
 }) {
   const field = mapCriterionToField(item.criterion);
   const suggestion = improvedStory ? getImprovedText(field, improvedStory) : null;
@@ -60,6 +61,14 @@ function InlineAnnotation({
                   Apply
                 </button>
               )}
+              {onDismiss && (
+                <button
+                  onClick={onDismiss}
+                  className="flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+                >
+                  Dismiss
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -77,12 +86,13 @@ function getAnnotationsForField(
 }
 
 function EditableField({
-  label, value, onSave, multiline = false, annotations, improvedStory, onApplyField,
+  label, value, onSave, multiline = false, annotations, improvedStory, onApplyField, onDismissAnnotation,
 }: {
   label: string; value: string; onSave: (val: string) => void; multiline?: boolean;
   annotations?: EvaluationScorecardItem[];
   improvedStory?: StoryDraft;
   onApplyField?: (field: StoryField) => void;
+  onDismissAnnotation?: (criterion: string) => void;
 }) {
   const [draft, setDraft] = useState(value);
 
@@ -111,7 +121,8 @@ function EditableField({
       </div>
       {annotations?.map((a, i) => (
         <InlineAnnotation key={i} item={a} improvedStory={improvedStory}
-          onApply={onApplyField ? () => onApplyField(mapCriterionToField(a.criterion)) : undefined} />
+          onApply={onApplyField ? () => onApplyField(mapCriterionToField(a.criterion)) : undefined}
+          onDismiss={onDismissAnnotation ? () => onDismissAnnotation(a.criterion) : undefined} />
       ))}
     </div>
   );
@@ -148,7 +159,7 @@ export function StoryPreview() {
   const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory } = useWizard();
   const [saving, setSaving] = useState(false);
   const [appliedFields, setAppliedFields] = useState<Set<StoryField>>(new Set());
-
+  const [dismissedCriteria, setDismissedCriteria] = useState<Set<string>>(new Set());
   const formatForJira = () => {
     const lines = [`Title: ${story.title}`, '', `As a ${story.asA}, I want to ${story.iWant}, so that ${story.soThat}`];
     if (story.description) lines.push('', 'Description:', story.description);
@@ -177,12 +188,16 @@ export function StoryPreview() {
 
   const improved = evaluation?.improvedStory;
   const failItems = evaluation?.scorecard;
-  const titleAnnotations = getAnnotationsForField(failItems, 'title').filter(() => !appliedFields.has('title'));
-  const userStoryAnnotations = getAnnotationsForField(failItems, 'userStory').filter(() => !appliedFields.has('userStory'));
-  const soThatAnnotations = getAnnotationsForField(failItems, 'soThat').filter(() => !appliedFields.has('soThat'));
-  const descAnnotations = getAnnotationsForField(failItems, 'description').filter(() => !appliedFields.has('description'));
-  const acAnnotations = getAnnotationsForField(failItems, 'acceptanceCriteria').filter(() => !appliedFields.has('acceptanceCriteria'));
-  const unmatchedAnnotations = getAnnotationsForField(failItems, 'unmatched');
+  const titleAnnotations = getAnnotationsForField(failItems, 'title').filter(a => !appliedFields.has('title') && !dismissedCriteria.has(a.criterion));
+  const userStoryAnnotations = getAnnotationsForField(failItems, 'userStory').filter(a => !appliedFields.has('userStory') && !dismissedCriteria.has(a.criterion));
+  const soThatAnnotations = getAnnotationsForField(failItems, 'soThat').filter(a => !appliedFields.has('soThat') && !dismissedCriteria.has(a.criterion));
+  const descAnnotations = getAnnotationsForField(failItems, 'description').filter(a => !appliedFields.has('description') && !dismissedCriteria.has(a.criterion));
+  const acAnnotations = getAnnotationsForField(failItems, 'acceptanceCriteria').filter(a => !appliedFields.has('acceptanceCriteria') && !dismissedCriteria.has(a.criterion));
+  const unmatchedAnnotations = getAnnotationsForField(failItems, 'unmatched').filter(a => !dismissedCriteria.has(a.criterion));
+
+  const dismissAnnotation = (criterion: string) => {
+    setDismissedCriteria(prev => new Set(prev).add(criterion));
+  };
 
   const hasFailures = evaluation && evaluation.scorecard.some(i => i.result === 'FAIL');
 
@@ -250,7 +265,7 @@ export function StoryPreview() {
         {/* Title */}
         {story.title && (
           <EditableField label="Title" value={story.title} onSave={v => updateStory({ title: v })}
-            annotations={titleAnnotations} improvedStory={improved} onApplyField={applyField} />
+            annotations={titleAnnotations} improvedStory={improved} onApplyField={applyField} onDismissAnnotation={dismissAnnotation} />
         )}
 
         {/* User Story block */}
@@ -271,15 +286,15 @@ export function StoryPreview() {
             </div>
           </div>
           {soThatAnnotations.map((a, i) => (
-            <InlineAnnotation key={`so-${i}`} item={a} improvedStory={improved} onApply={() => applyField(mapCriterionToField(a.criterion))} />
+            <InlineAnnotation key={`so-${i}`} item={a} improvedStory={improved} onApply={() => applyField(mapCriterionToField(a.criterion))} onDismiss={() => dismissAnnotation(a.criterion)} />
           ))}
           {userStoryAnnotations.map((a, i) => (
-            <InlineAnnotation key={`us-${i}`} item={a} improvedStory={improved} onApply={() => applyField(mapCriterionToField(a.criterion))} />
+            <InlineAnnotation key={`us-${i}`} item={a} improvedStory={improved} onApply={() => applyField(mapCriterionToField(a.criterion))} onDismiss={() => dismissAnnotation(a.criterion)} />
           ))}
         </div>
 
         <EditableField label="Description" value={story.description} onSave={v => updateStory({ description: v })} multiline
-          annotations={descAnnotations} improvedStory={improved} onApplyField={applyField} />
+          annotations={descAnnotations} improvedStory={improved} onApplyField={applyField} onDismissAnnotation={dismissAnnotation} />
 
         {/* Acceptance Criteria */}
         <div className="rounded-lg border border-transparent p-3 transition-colors hover:border-border hover:bg-muted/30">
@@ -304,7 +319,7 @@ export function StoryPreview() {
             <p className="text-sm italic text-muted-foreground">No criteria yet...</p>
           )}
           {acAnnotations.map((a, i) => (
-            <InlineAnnotation key={`ac-${i}`} item={a} improvedStory={improved} onApply={() => applyField('acceptanceCriteria')} />
+            <InlineAnnotation key={`ac-${i}`} item={a} improvedStory={improved} onApply={() => applyField('acceptanceCriteria')} onDismiss={() => dismissAnnotation(a.criterion)} />
           ))}
         </div>
 
@@ -312,7 +327,7 @@ export function StoryPreview() {
         {unmatchedAnnotations.length > 0 && (
           <div className="p-3">
             {unmatchedAnnotations.map((a, i) => (
-              <InlineAnnotation key={`un-${i}`} item={a} improvedStory={improved} />
+              <InlineAnnotation key={`un-${i}`} item={a} improvedStory={improved} onDismiss={() => dismissAnnotation(a.criterion)} />
             ))}
           </div>
         )}
