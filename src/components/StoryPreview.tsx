@@ -24,10 +24,7 @@ function InlineAnnotation({ item }: { item: EvaluationScorecardItem }) {
     <div className="mt-1 border-l-2 border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 pl-2 py-1">
       <div className="flex items-start gap-1.5 text-xs">
         <AlertTriangle className="mt-0.5 h-3 w-3 flex-shrink-0 text-amber-500" />
-        <span>
-          <span className="font-medium text-amber-700 dark:text-amber-400">{item.criterion}:</span>{' '}
-          <span className="text-muted-foreground">{item.explanation}</span>
-        </span>
+        <span className="text-muted-foreground">{item.explanation}</span>
       </div>
     </div>
   );
