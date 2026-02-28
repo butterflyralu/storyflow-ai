@@ -9,8 +9,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const DEMO_CONTEXT: ProductContextInput = {
+  productName: 'DeskFlow',
+  industry: 'PropTech / Workplace Management',
+  productType: 'b2b',
+  platform: 'both',
+  userTypes: 'Employee, Office Manager, Facilities Admin',
+  productDescription: 'A hot-desk and meeting room booking platform that lets hybrid teams reserve workspaces on-demand. Employees find and book available desks or rooms from a live floor map, while Office Managers configure floor plans, set booking rules, and view utilization analytics.',
+  mission: 'Eliminate wasted office space and make hybrid work effortless for every team.',
+  northStar: 'Weekly active bookings per employee',
+  persona: 'Hybrid knowledge worker, 25-40, uses laptop and phone, splits time between home and office 2-3 days per week. Values speed and flexibility — wants to book a desk in under 10 seconds.',
+  strategy: 'Mobile-first UX with real-time availability and smart suggestions. Differentiate through simplicity and instant booking versus complex enterprise facility management tools.',
+  objectives: 'Launch interactive floor map, add recurring booking support, integrate with Google Calendar and Microsoft Teams, achieve 80% adoption within pilot companies.',
+  acFormat: 'plain',
+};
 
 const TILE_COLORS: Record<number, string> = {
   0: 'border-primary/40 bg-accent text-accent-foreground',
@@ -136,8 +151,19 @@ export function ContextWizard() {
 
       <Card className="w-full max-w-xl border-0 shadow-card rounded-3xl">
         <CardContent className="p-8 sm:p-10">
-          <h2 className="mb-1 font-display text-2xl font-bold tracking-tight text-foreground">{info.title}</h2>
-          <p className="mb-7 text-sm text-muted-foreground">{info.subtitle}</p>
+          <div className="mb-7 flex items-center justify-between">
+            <div>
+              <h2 className="mb-1 font-display text-2xl font-bold tracking-tight text-foreground">{info.title}</h2>
+              <p className="text-sm text-muted-foreground">{info.subtitle}</p>
+            </div>
+            {screen === 0 && (
+              <Button variant="outline" size="sm" className="rounded-xl gap-1.5 text-xs shrink-0"
+                onClick={() => setValues({ ...DEMO_CONTEXT })}>
+                <Sparkles className="h-3.5 w-3.5" />
+                Use Demo Content
+              </Button>
+            )}
+          </div>
 
           {screen === 0 && (
             <div className="space-y-5">
