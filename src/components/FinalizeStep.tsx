@@ -78,8 +78,7 @@ export function FinalizeStep() {
             )}
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div>
               <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Priority</div>
               <Select value={story.metadata.priority || 'Medium'} onValueChange={v => updateMetadata('priority', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -90,21 +89,6 @@ export function FinalizeStep() {
                   <SelectItem value="Critical">Critical</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex-1">
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estimate</div>
-              <Select value={story.metadata.estimate || '3'} onValueChange={v => updateMetadata('estimate', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 point</SelectItem>
-                  <SelectItem value="2">2 points</SelectItem>
-                  <SelectItem value="3">3 points</SelectItem>
-                  <SelectItem value="5">5 points</SelectItem>
-                  <SelectItem value="8">8 points</SelectItem>
-                  <SelectItem value="13">13 points</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </CardContent>
       </Card>
