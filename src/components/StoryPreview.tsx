@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Pencil, Check, X, AlertTriangle, Save, Copy } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Pencil, Check, X, AlertTriangle, Save, Copy, Info } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 
@@ -222,14 +222,16 @@ export function StoryPreview() {
           <CardTitle className="text-lg">Story Draft</CardTitle>
           <div className="flex items-center gap-2">
             {evaluation && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-xs cursor-help">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-xs cursor-pointer gap-1 hover:opacity-80 transition-opacity">
                     {evaluation.scorecard.filter(i => i.result === 'PASS').length}/{evaluation.scorecard.length} passed
+                    <Info className="h-3 w-3" />
                   </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs p-3">
-                  <div className="space-y-1.5 text-xs">
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="end" className="max-w-sm p-4">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Evaluation Scorecard</div>
+                  <div className="space-y-2 text-xs">
                     {evaluation.scorecard.map((item, i) => (
                       <div key={i} className="flex items-start gap-2">
                         <span className={item.result === 'PASS' ? 'text-green-500' : 'text-destructive'}>
@@ -242,8 +244,8 @@ export function StoryPreview() {
                       </div>
                     ))}
                   </div>
-                </TooltipContent>
-              </Tooltip>
+                </PopoverContent>
+              </Popover>
             )}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
             {story.title && (
