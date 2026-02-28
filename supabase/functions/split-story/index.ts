@@ -18,7 +18,8 @@ You receive an epic story and product context. Your job is to split the epic int
 4. Each story should include 2-4 acceptance criteria grouped by category, derived from the original epic's criteria and the story's specific scope
 5. Provide a brief epicSummary that captures the original epic's intent
 6. Each story should be small enough for a single sprint
-7. Don't create stories that are just technical tasks — each must deliver user value`;
+7. Don't create stories that are just technical tasks — each must deliver user value
+8. Set each sub-story's metadata.epic field to the original epic's title`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

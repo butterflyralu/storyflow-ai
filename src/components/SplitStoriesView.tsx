@@ -38,6 +38,11 @@ function StoryCard({
           className="mt-1 w-full border-0 bg-transparent text-base font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
           placeholder="Story title..."
         />
+        {story.metadata?.epic && (
+          <Badge variant="secondary" className="mt-1 text-xs">
+            Epic: {story.metadata.epic}
+          </Badge>
+        )}
       </CardHeader>
       <CardContent className="flex-1 space-y-3 overflow-y-auto">
         {/* User Story */}
