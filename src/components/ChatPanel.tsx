@@ -123,7 +123,11 @@ export function ChatPanel() {
               story: response.storyDraft,
             });
             setEvaluation(evalResult);
-            setStep(3);
+            addMessage({
+              id: String(Date.now() + 4),
+              role: 'assistant',
+              content: '✅ Evaluation complete — check the annotations in your story draft on the right.',
+            });
           } catch {
             addMessage({
               id: String(Date.now() + 3),
