@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { StepIndicator } from '@/components/StepIndicator';
 import { ContextWizard } from '@/components/ContextWizard';
@@ -6,30 +5,9 @@ import { ChatPanel } from '@/components/ChatPanel';
 import { StoryPreview } from '@/components/StoryPreview';
 import { EvaluationCard } from '@/components/EvaluationCard';
 import { FinalizeStep } from '@/components/FinalizeStep';
-import { Button } from '@/components/ui/button';
-import { api } from '@/services/api';
-import { ArrowRight, Loader2 } from 'lucide-react';
 
 export function Wizard() {
-  const { step, setStep, story, setEvaluation, contextId, sessionId } = useWizard();
-  const [evaluating, setEvaluating] = useState(false);
-
-  const hasMinContent = Boolean(story.asA && story.iWant && story.soThat);
-
-  const handleEvaluate = async () => {
-    setEvaluating(true);
-    try {
-      const result = await api.evaluateStory({
-        sessionId,
-        contextId: contextId || '',
-        story,
-      });
-      setEvaluation(result);
-      setStep(3);
-    } finally {
-      setEvaluating(false);
-    }
-  };
+  const { step } = useWizard();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -51,32 +29,13 @@ export function Wizard() {
         {step === 1 && <ContextWizard />}
 
         {step === 2 && (
-          <div className="flex h-[calc(100vh-140px)] flex-col">
-            <div className="flex flex-1 overflow-hidden">
-              <div className="flex w-1/2 flex-col border-r border-border">
-                <ChatPanel />
-              </div>
-              <div className="w-1/2 overflow-y-auto p-4">
-                <StoryPreview />
-              </div>
+          <div className="flex h-[calc(100vh-140px)]">
+            <div className="flex w-1/2 flex-col border-r border-border">
+              <ChatPanel />
             </div>
-            {hasMinContent && (
-              <div className="border-t border-border bg-card/80 p-4 text-center">
-                <Button onClick={handleEvaluate} disabled={evaluating} size="lg">
-                  {evaluating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Evaluating...
-                    </>
-                  ) : (
-                    <>
-                      Ready to Evaluate
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+            <div className="w-1/2 overflow-y-auto p-4">
+              <StoryPreview />
+            </div>
           </div>
         )}
 
