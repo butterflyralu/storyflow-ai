@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Pencil, Check, X, AlertTriangle, Save, Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
@@ -206,9 +207,28 @@ export function StoryPreview() {
           <CardTitle className="text-lg">Story Draft</CardTitle>
           <div className="flex items-center gap-2">
             {evaluation && (
-              <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-xs">
-                {evaluation.scorecard.filter(i => i.result === 'PASS').length}/{evaluation.scorecard.length} passed
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-xs cursor-help">
+                    {evaluation.scorecard.filter(i => i.result === 'PASS').length}/{evaluation.scorecard.length} passed
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs p-3">
+                  <div className="space-y-1.5 text-xs">
+                    {evaluation.scorecard.map((item, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className={item.result === 'PASS' ? 'text-green-500' : 'text-destructive'}>
+                          {item.result === 'PASS' ? '✓' : '✗'}
+                        </span>
+                        <div>
+                          <span className="font-medium">{item.framework} – {item.criterion}</span>
+                          <p className="text-muted-foreground">{item.explanation}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             )}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
             {story.title && (
