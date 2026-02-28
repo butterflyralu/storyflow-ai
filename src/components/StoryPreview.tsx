@@ -197,7 +197,9 @@ export function StoryPreview() {
       case 'description': updateStory({ description: improved.description }); break;
       case 'userStory': updateStory({ asA: improved.asA, iWant: improved.iWant, soThat: improved.soThat }); break;
       case 'acceptanceCriteria': updateStory({ acceptanceCriteria: improved.acceptanceCriteria }); break;
+      default: return;
     }
+    toast({ title: '✅ Applied', description: `Updated ${field} with the suggested improvement.` });
   };
 
   return (
