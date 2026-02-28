@@ -82,6 +82,12 @@ export function ChatPanel() {
         sessionId,
         contextId: contextId || '',
         agentContext: {
+          productName: productContext.productName,
+          industry: productContext.industry,
+          productType: productContext.productType,
+          platform: productContext.platform,
+          userTypes: productContext.userTypes,
+          productDescription: productContext.productDescription,
           mission: productContext.mission,
           persona: productContext.persona,
           strategy: productContext.strategy,

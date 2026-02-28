@@ -75,7 +75,7 @@ serve(async (req) => {
       : "\n\nAC Format: Write acceptance criteria as plain, concise statements. Do NOT use Given/When/Then or Gherkin syntax.";
 
     const contextStr = agentContext
-      ? `\n\nProduct Context:\n- Mission: ${agentContext.mission || "Not set"}\n- Persona: ${agentContext.persona || "Not set"}\n- Strategy: ${agentContext.strategy || "Not set"}\n- North Star: ${agentContext.northStar || "Not set"}\n- Objectives: ${agentContext.objectives || "Not set"}`
+      ? `\n\nProduct Context:\n- Product Name: ${agentContext.productName || "Not set"}\n- Industry: ${agentContext.industry || "Not set"}\n- Product Type: ${agentContext.productType || "Not set"}\n- Platform: ${agentContext.platform || "Not set"}\n- User Types: ${agentContext.userTypes || "Not set"}\n- Product Description: ${agentContext.productDescription || "Not set"}\n- Mission: ${agentContext.mission || "Not set"}\n- Persona: ${agentContext.persona || "Not set"}\n- Strategy: ${agentContext.strategy || "Not set"}\n- North Star: ${agentContext.northStar || "Not set"}\n- Objectives: ${agentContext.objectives || "Not set"}`
       : "";
 
     const draftStr = `\n\nCurrent Story Draft:\n${JSON.stringify(storyDraft, null, 2)}`;

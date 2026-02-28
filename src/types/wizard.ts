@@ -50,6 +50,12 @@ export const EMPTY_STORY: StoryDraft = {
 };
 
 export const EMPTY_CONTEXT: ProductContextInput = {
+  productName: '',
+  industry: '',
+  productType: 'b2b',
+  platform: 'web',
+  userTypes: '',
+  productDescription: '',
   mission: '',
   northStar: '',
   persona: '',

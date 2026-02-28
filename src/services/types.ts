@@ -42,7 +42,16 @@ export interface ValidateContextResponse {
   reason: string;
 }
 
+export type ProductType = 'b2b' | 'b2c' | 'enterprise' | 'internal';
+export type Platform = 'web' | 'mobile' | 'both';
+
 export interface SaveContextRequest {
+  productName: string;
+  industry: string;
+  productType: ProductType;
+  platform: Platform;
+  userTypes: string;
+  productDescription: string;
   mission: string;
   northStar: string;
   persona: string;
@@ -114,6 +123,12 @@ export interface StoryDraft {
 }
 
 export interface StoryAgentContext {
+  productName?: string;
+  industry?: string;
+  productType?: string;
+  platform?: string;
+  userTypes?: string;
+  productDescription?: string;
   mission: string;
   persona: string;
   strategy: string;
