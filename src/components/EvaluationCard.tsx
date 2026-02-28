@@ -92,7 +92,7 @@ export function EvaluationCard() {
         <Button
           onClick={() => {
             setStory(evaluation.improvedStory);
-            setStep(3);
+            setStep(2);
           }}
           className="flex-1"
         >
@@ -105,7 +105,7 @@ export function EvaluationCard() {
         </Button>
         <Button
           variant="secondary"
-          onClick={() => setStep(3)}
+          onClick={() => setStep(2)}
           className="flex-1"
         >
           Keep Original

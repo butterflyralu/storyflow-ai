@@ -2,32 +2,29 @@ import { cn } from '@/lib/utils';
 import { useWizard } from '@/context/WizardContext';
 import { Check } from 'lucide-react';
 
-const STEPS = [
-  { num: 1, label: 'Context' },
-  { num: 2, label: 'Draft' },
-  { num: 3, label: 'Finalize' },
-] as const;
-
 export function StepIndicator() {
-  const { step, setStep } = useWizard();
+  const { step } = useWizard();
+
+  const steps = [
+    { num: 1 as const, label: 'Context' },
+    { num: 2 as const, label: 'Draft' },
+  ];
 
   return (
     <div className="flex items-center justify-center gap-2 py-4 px-6">
-      {STEPS.map((s, i) => {
+      {steps.map((s, i) => {
         const isComplete = step > s.num;
         const isCurrent = step === s.num;
         const isFuture = step < s.num;
 
         return (
           <div key={s.num} className="flex items-center gap-2">
-            <button
-              onClick={() => isComplete && setStep(s.num as 1 | 2 | 3)}
-              disabled={isFuture}
+            <div
               className={cn(
                 'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300',
-                isComplete && 'bg-primary/10 text-primary cursor-pointer hover:bg-primary/20',
+                isComplete && 'bg-primary/10 text-primary',
                 isCurrent && 'bg-primary text-primary-foreground shadow-md',
-                isFuture && 'bg-muted text-muted-foreground cursor-not-allowed',
+                isFuture && 'bg-muted text-muted-foreground',
               )}
             >
               <span
@@ -41,8 +38,8 @@ export function StepIndicator() {
                 {isComplete ? <Check className="h-3.5 w-3.5" /> : s.num}
               </span>
               <span className="hidden sm:inline">{s.label}</span>
-            </button>
-            {i < STEPS.length - 1 && (
+            </div>
+            {i < steps.length - 1 && (
               <div
                 className={cn(
                   'h-px w-8 transition-colors duration-300',
