@@ -1,9 +1,7 @@
 import { useWizard } from '@/context/WizardContext';
-import { StepIndicator } from '@/components/StepIndicator';
 import { ContextWizard } from '@/components/ContextWizard';
 import { ChatPanel } from '@/components/ChatPanel';
 import { StoryPreview } from '@/components/StoryPreview';
-import { FinalizeStep } from '@/components/FinalizeStep';
 
 export function Wizard() {
   const { step } = useWizard();
@@ -18,7 +16,6 @@ export function Wizard() {
             </h1>
             <div className="text-xs text-muted-foreground">AI Story Assistant</div>
           </div>
-          <StepIndicator />
         </div>
       </header>
 
@@ -26,7 +23,7 @@ export function Wizard() {
         {step === 1 && <ContextWizard />}
 
         {step === 2 && (
-          <div className="flex h-[calc(100vh-140px)]">
+          <div className="flex h-[calc(100vh-64px)]">
             <div className="flex w-1/2 flex-col border-r border-border">
               <ChatPanel />
             </div>
@@ -35,8 +32,6 @@ export function Wizard() {
             </div>
           </div>
         )}
-
-        {step === 3 && <FinalizeStep />}
       </main>
     </div>
   );

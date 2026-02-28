@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Pencil, Check, X, AlertTriangle } from 'lucide-react';
+import { Pencil, Check, X, AlertTriangle, Save } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 
 type StoryField = 'title' | 'userStory' | 'soThat' | 'description' | 'acceptanceCriteria' | 'unmatched';
@@ -148,7 +149,16 @@ function EditableInline({ value, onSave, placeholder }: { value: string; onSave:
 }
 
 export function StoryPreview() {
-  const { story, updateStory, evaluation, setStory, setStep, setEvaluation } = useWizard();
+  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory } = useWizard();
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await new Promise(r => setTimeout(r, 500));
+    saveStory(story);
+    setSaving(false);
+    toast({ title: '✅ Story saved!', description: 'Your user story has been finalized.' });
+  };
 
   const improved = evaluation?.improvedStory;
   const failItems = evaluation?.scorecard;
@@ -177,13 +187,19 @@ export function StoryPreview() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Story Draft</CardTitle>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             {evaluation && (
               <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-xs">
                 {evaluation.scorecard.filter(i => i.result === 'PASS').length}/{evaluation.scorecard.length} passed
               </Badge>
             )}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
+            {story.title && (
+              <Button size="sm" variant="outline" onClick={handleSave} disabled={saving} className="ml-1 h-7 gap-1 text-xs">
+                <Save className="h-3 w-3" />
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -269,11 +285,11 @@ export function StoryPreview() {
         {/* Action bar when evaluation present */}
         {evaluation && (
           <div className="flex gap-2 border-t border-border pt-3 mt-2">
-            <Button size="sm" onClick={() => { setStory(evaluation.improvedStory); setEvaluation(null); setStep(3); }} className="flex-1">
+            <Button size="sm" onClick={() => { setStory(evaluation.improvedStory); setEvaluation(null); }} className="flex-1">
               Accept All Improvements
               {hasFailures && <Badge variant="secondary" className="ml-1.5 text-[10px]">{evaluation.scorecard.filter(i => i.result === 'FAIL').length} fixed</Badge>}
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => { setEvaluation(null); setStep(3); }} className="flex-1">
+            <Button size="sm" variant="secondary" onClick={() => { setEvaluation(null); }} className="flex-1">
               Keep Original
             </Button>
           </div>
