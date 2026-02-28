@@ -13,7 +13,7 @@ export function ChatPanel() {
   const {
     chatHistory, addMessage, story, updateStory,
     productContext, contextId, sessionId,
-    setEvaluation, setStep,
+    setEvaluation, setStep, saveStory, resetStory,
   } = useWizard();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,6 +59,27 @@ export function ChatPanel() {
     const userMsg: UIChatMessage = { id: String(Date.now()), role: 'user', content: text };
     addMessage(userMsg);
     setInput('');
+
+    const lower = text.toLowerCase();
+
+    // Handle local actions without hitting the API
+    if (lower.includes('save this story')) {
+      try {
+        await new Promise(r => setTimeout(r, 500));
+        saveStory(storyRef.current);
+        addMessage({ id: String(Date.now() + 1), role: 'assistant', content: '✅ Story saved! You can start a new story whenever you\'re ready.', options: [{ label: 'Start a new story' }] });
+      } catch {
+        addMessage({ id: String(Date.now() + 1), role: 'assistant', content: 'Failed to save. Please try again.' });
+      }
+      return;
+    }
+
+    if (lower.includes('start a new story')) {
+      resetStory();
+      addMessage({ id: String(Date.now() + 1), role: 'assistant', content: 'Fresh start! What user story would you like to draft?', options: [{ label: '🔐 Authentication story' }, { label: '📊 Dashboard feature' }, { label: '🔔 Notifications' }, { label: '✏️ Something else' }] });
+      return;
+    }
+
     setLoading(true);
 
     try {

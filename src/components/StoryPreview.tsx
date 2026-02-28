@@ -149,7 +149,7 @@ function EditableInline({ value, onSave, placeholder }: { value: string; onSave:
 }
 
 export function StoryPreview() {
-  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory } = useWizard();
+  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory } = useWizard();
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -285,11 +285,28 @@ export function StoryPreview() {
         {/* Action bar when evaluation present */}
         {evaluation && (
           <div className="flex gap-2 border-t border-border pt-3 mt-2">
-            <Button size="sm" onClick={() => { setStory(evaluation.improvedStory); setEvaluation(null); }} className="flex-1">
+            <Button size="sm" onClick={() => {
+              setStory(evaluation.improvedStory);
+              setEvaluation(null);
+              addMessage({
+                id: String(Date.now()),
+                role: 'assistant',
+                content: '✅ Story updated with improvements! You can save it or keep refining. Want to start a new story?',
+                options: [{ label: 'Save this story' }, { label: 'Start a new story' }, { label: 'Keep editing' }],
+              });
+            }} className="flex-1">
               Accept All Improvements
               {hasFailures && <Badge variant="secondary" className="ml-1.5 text-[10px]">{evaluation.scorecard.filter(i => i.result === 'FAIL').length} fixed</Badge>}
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => { setEvaluation(null); }} className="flex-1">
+            <Button size="sm" variant="secondary" onClick={() => {
+              setEvaluation(null);
+              addMessage({
+                id: String(Date.now()),
+                role: 'assistant',
+                content: 'Kept your original story. You can save it or continue editing. Want to start a new story?',
+                options: [{ label: 'Save this story' }, { label: 'Start a new story' }, { label: 'Keep editing' }],
+              });
+            }} className="flex-1">
               Keep Original
             </Button>
           </div>
