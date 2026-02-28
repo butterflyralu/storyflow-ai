@@ -110,12 +110,18 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
 
   const confirmSplitStories = useCallback((indices: number[]) => {
     setPendingSplitStoriesState(prev => {
-      const selected = indices.map(i => prev[i]).filter(Boolean);
+      const selected = indices.map(i => prev[i]).filter(Boolean).map(s => ({
+        ...s,
+        metadata: {
+          ...s.metadata,
+          epic: s.metadata?.epic || story.title || 'Untitled Epic',
+        },
+      }));
       setSplitStoriesState(selected);
       setActiveSplitIndex(0);
       return [];
     });
-  }, []);
+  }, [story.title]);
 
   const clearPendingSplit = useCallback(() => {
     setPendingSplitStoriesState([]);
