@@ -195,9 +195,9 @@ export function StoryPreview() {
             )}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
             {story.title && (
-              <Button size="sm" variant="outline" onClick={handleSave} disabled={saving} className="ml-1 h-7 gap-1 text-xs">
-                <Save className="h-3 w-3" />
-                {saving ? 'Saving...' : 'Save'}
+              <Button size="sm" onClick={handleSave} disabled={saving} className="ml-1 h-8 gap-1.5 px-4 text-xs font-semibold shadow-sm">
+                <Save className="h-3.5 w-3.5" />
+                {saving ? 'Saving...' : 'Save Story'}
               </Button>
             )}
           </div>
