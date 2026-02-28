@@ -137,15 +137,8 @@ export function ChatPanel() {
             });
           }
           return;
-        } else {
-          // User wants changes — show options to continue editing
-          addMessage({
-            id: String(Date.now() + 2),
-            role: 'assistant',
-            content: 'No problem — what would you like to change?',
-            options: [{ label: 'Change acceptance criteria' }, { label: 'Update the story description' }],
-          });
         }
+        // User wants changes — options are already in the AI response
       }
     } finally {
       setLoading(false);

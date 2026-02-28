@@ -112,10 +112,13 @@ async function mockRouteInput(input: RouterRequest): Promise<RouterResponse> {
   };
 }
 
+let mockTurnCount = 0;
+
 async function mockStoryAgent(
   input: StoryAgentRequest,
 ): Promise<StoryAgentResponse> {
   await sleep(900);
+  mockTurnCount++;
 
   const nextDraft = {
     ...input.storyDraft,
@@ -147,16 +150,33 @@ async function mockStoryAgent(
           ],
   };
 
-  const askForConfirmation = nextDraft.acceptanceCriteria.length > 0;
+  // Only ask for confirmation once the draft is ready and on the first completion
+  const isFirstDraft = mockTurnCount <= 2 && nextDraft.acceptanceCriteria.length > 0;
+  const msgLower = input.message.toLowerCase();
+  const isEditRequest = msgLower.includes('change') || msgLower.includes('update') || msgLower.includes('edit') || msgLower.includes('modify');
+
+  if (isEditRequest) {
+    return {
+      message: "Sure — I've updated the draft. Take a look at the story on the right. Anything else you'd like to adjust?",
+      options: [{ label: "Looks good now" }, { label: "Change something else" }],
+      awaitingCriteriaConfirmation: false,
+      storyDraft: nextDraft,
+    };
+  }
+
+  if (isFirstDraft) {
+    return {
+      message: "I drafted acceptance criteria. Do these look complete before evaluation?",
+      options: [{ label: "Yes, looks good" }, { label: "I want to change something" }],
+      awaitingCriteriaConfirmation: true,
+      storyDraft: nextDraft,
+    };
+  }
 
   return {
-    message: askForConfirmation
-      ? "I drafted acceptance criteria. Do these look complete before evaluation?"
-      : "Let's clarify one thing first: should reset use email link or OTP?",
-    options: askForConfirmation
-      ? [{ label: "Yes, looks good" }, { label: "I want to change something" }]
-      : [{ label: "Email link reset" }, { label: "OTP code reset" }],
-    awaitingCriteriaConfirmation: askForConfirmation,
+    message: "Let's clarify one thing first: should reset use email link or OTP?",
+    options: [{ label: "Email link reset" }, { label: "OTP code reset" }],
+    awaitingCriteriaConfirmation: false,
     storyDraft: nextDraft,
   };
 }
