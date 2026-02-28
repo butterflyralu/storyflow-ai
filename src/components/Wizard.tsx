@@ -7,11 +7,11 @@ import { StoryPreview } from '@/components/StoryPreview';
 import { EvaluationCard } from '@/components/EvaluationCard';
 import { FinalizeStep } from '@/components/FinalizeStep';
 import { Button } from '@/components/ui/button';
-import { mockEvaluateStory } from '@/services/mockApi';
+import { api } from '@/services/api';
 import { ArrowRight, Loader2 } from 'lucide-react';
 
 export function Wizard() {
-  const { step, setStep, story, setEvaluation } = useWizard();
+  const { step, setStep, story, setEvaluation, contextId, sessionId } = useWizard();
   const [evaluating, setEvaluating] = useState(false);
 
   const hasMinContent = Boolean(story.asA && story.iWant && story.soThat);
@@ -19,7 +19,11 @@ export function Wizard() {
   const handleEvaluate = async () => {
     setEvaluating(true);
     try {
-      const result = await mockEvaluateStory(story);
+      const result = await api.evaluateStory({
+        sessionId,
+        contextId: contextId || '',
+        story,
+      });
       setEvaluation(result);
       setStep(3);
     } finally {

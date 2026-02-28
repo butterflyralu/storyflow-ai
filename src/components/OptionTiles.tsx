@@ -1,9 +1,8 @@
-import { OptionTile } from '@/types/wizard';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  options: OptionTile[];
-  onSelect: (value: string) => void;
+  options: { label: string }[];
+  onSelect: (label: string) => void;
 }
 
 export function OptionTiles({ options, onSelect }: Props) {
@@ -12,7 +11,7 @@ export function OptionTiles({ options, onSelect }: Props) {
       {options.map(opt => (
         <button
           key={opt.label}
-          onClick={() => onSelect(opt.value)}
+          onClick={() => onSelect(opt.label)}
           className={cn(
             'rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium',
             'text-foreground shadow-sm transition-all duration-150',

@@ -19,15 +19,8 @@ function EditableField({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
-  const save = () => {
-    onSave(draft);
-    setEditing(false);
-  };
-
-  const cancel = () => {
-    setDraft(value);
-    setEditing(false);
-  };
+  const save = () => { onSave(draft); setEditing(false); };
+  const cancel = () => { setDraft(value); setEditing(false); };
 
   return (
     <div className="group relative rounded-lg border border-transparent p-3 transition-colors hover:border-border hover:bg-muted/30">
@@ -77,6 +70,7 @@ function EditableField({
     </div>
   );
 }
+
 function EditableInline({
   value,
   onSave,
@@ -130,12 +124,17 @@ export function StoryPreview() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Story Draft</CardTitle>
           <div className="flex gap-2">
-            <Badge variant="outline">{story.priority}</Badge>
-            <Badge variant="secondary">{story.size}</Badge>
+            <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
+            <Badge variant="secondary">{story.metadata.estimate || '—'}</Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-1">
+        {/* Title */}
+        {story.title && (
+          <EditableField label="Title" value={story.title} onSave={v => updateStory({ title: v })} />
+        )}
+
         {/* Unified User Story block */}
         <div className="rounded-lg border border-border bg-muted/20 p-4">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -159,31 +158,31 @@ export function StoryPreview() {
 
         <EditableField label="Description" value={story.description} onSave={v => updateStory({ description: v })} multiline />
 
+        {/* Grouped Acceptance Criteria */}
         <div className="rounded-lg border border-transparent p-3 transition-colors hover:border-border hover:bg-muted/30">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Acceptance Criteria
           </div>
           {story.acceptanceCriteria.length > 0 ? (
-            <ul className="space-y-1.5">
-              {story.acceptanceCriteria.map((ac, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                  <span className="mt-0.5 text-primary">✓</span>
-                  <span>{ac}</span>
-                </li>
+            <div className="space-y-3">
+              {story.acceptanceCriteria.map((group, gi) => (
+                <div key={gi}>
+                  <div className="mb-1 text-xs font-medium text-muted-foreground">{group.category}</div>
+                  <ul className="space-y-1">
+                    {group.items.map((item, ii) => (
+                      <li key={ii} className="flex items-start gap-2 text-sm text-foreground">
+                        <span className="mt-0.5 text-primary">✓</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
             <p className="text-sm italic text-muted-foreground">No criteria yet...</p>
           )}
         </div>
-
-        {story.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 p-3">
-            {story.tags.map(tag => (
-              <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

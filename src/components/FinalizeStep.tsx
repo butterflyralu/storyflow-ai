@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockSaveStory } from '@/services/mockApi';
 import { toast } from '@/hooks/use-toast';
 import { Save, RotateCcw, Check } from 'lucide-react';
 
@@ -15,12 +13,17 @@ export function FinalizeStep() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await mockSaveStory(story);
+      // In mock mode this is instant; when real API is live use api.saveStory()
+      await new Promise(r => setTimeout(r, 500));
       saveStory(story);
       toast({ title: '✅ Story saved!', description: 'Your user story has been finalized.' });
     } finally {
       setSaving(false);
     }
+  };
+
+  const updateMetadata = (field: string, value: string) => {
+    updateStory({ metadata: { ...story.metadata, [field]: value } });
   };
 
   return (
@@ -32,7 +35,9 @@ export function FinalizeStep() {
 
       <Card className="border-0 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-lg">User Story</CardTitle>
+          <CardTitle className="text-lg">
+            {story.title || 'User Story'}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-lg bg-muted/50 p-4">
@@ -52,39 +57,51 @@ export function FinalizeStep() {
 
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Acceptance Criteria</div>
-            <ul className="space-y-1.5">
-              {story.acceptanceCriteria.map((ac, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                  <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
-                  <span>{ac}</span>
-                </li>
-              ))}
-            </ul>
+            {story.acceptanceCriteria.length > 0 ? (
+              <div className="space-y-3">
+                {story.acceptanceCriteria.map((group, gi) => (
+                  <div key={gi}>
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">{group.category}</div>
+                    <ul className="space-y-1.5">
+                      {group.items.map((item, ii) => (
+                        <li key={ii} className="flex items-start gap-2 text-sm text-foreground">
+                          <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm italic text-muted-foreground">No criteria defined.</p>
+            )}
           </div>
 
           <div className="flex gap-4">
             <div className="flex-1">
               <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Priority</div>
-              <Select value={story.priority} onValueChange={v => updateStory({ priority: v as any })}>
+              <Select value={story.metadata.priority || 'Medium'} onValueChange={v => updateMetadata('priority', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Critical">Critical</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex-1">
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Size</div>
-              <Select value={story.size} onValueChange={v => updateStory({ size: v as any })}>
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estimate</div>
+              <Select value={story.metadata.estimate || '3'} onValueChange={v => updateMetadata('estimate', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="XS">XS</SelectItem>
-                  <SelectItem value="S">S</SelectItem>
-                  <SelectItem value="M">M</SelectItem>
-                  <SelectItem value="L">L</SelectItem>
-                  <SelectItem value="XL">XL</SelectItem>
+                  <SelectItem value="1">1 point</SelectItem>
+                  <SelectItem value="2">2 points</SelectItem>
+                  <SelectItem value="3">3 points</SelectItem>
+                  <SelectItem value="5">5 points</SelectItem>
+                  <SelectItem value="8">8 points</SelectItem>
+                  <SelectItem value="13">13 points</SelectItem>
                 </SelectContent>
               </Select>
             </div>
