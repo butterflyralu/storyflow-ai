@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Pencil, Check, X, AlertTriangle, Save, Copy, Info } from 'lucide-react';
+import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { api } from '@/services/api';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 
 type StoryField = 'title' | 'userStory' | 'soThat' | 'description' | 'acceptanceCriteria' | 'unmatched';
@@ -156,8 +157,9 @@ function EditableInline({ value, onSave, placeholder }: { value: string; onSave:
 }
 
 export function StoryPreview() {
-  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory } = useWizard();
+  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setSplitStories, setEpicSummary } = useWizard();
   const [saving, setSaving] = useState(false);
+  const [splitting, setSplitting] = useState(false);
   const [appliedFields, setAppliedFields] = useState<Set<StoryField>>(new Set());
   const [dismissedCriteria, setDismissedCriteria] = useState<Set<string>>(new Set());
   const formatForJira = () => {
@@ -340,7 +342,50 @@ export function StoryPreview() {
         {evaluation?.isLikelyEpic && (
           <div className="flex items-center gap-2 rounded-lg bg-destructive/5 px-4 py-3 text-sm text-foreground">
             <AlertTriangle className="h-4 w-4 text-destructive" />
-            This story may be too large — consider splitting it.
+            <span className="flex-1">This story may be too large — consider splitting it.</span>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={splitting}
+              className="gap-1.5 text-xs font-semibold"
+              onClick={async () => {
+                setSplitting(true);
+                try {
+                  const result = await api.splitStory({
+                    story,
+                    agentContext: {
+                      productName: productContext.productName,
+                      industry: productContext.industry,
+                      productType: productContext.productType,
+                      platform: productContext.platform,
+                      userTypes: productContext.userTypes,
+                      productDescription: productContext.productDescription,
+                      mission: productContext.mission,
+                      persona: productContext.persona,
+                      strategy: productContext.strategy,
+                      northStar: productContext.northStar,
+                      objectives: productContext.objectives,
+                    },
+                  });
+                  setSplitStories(result.stories);
+                  setEpicSummary(result.epicSummary);
+                  addMessage({
+                    id: String(Date.now()),
+                    role: 'assistant',
+                    content: `I've split the epic into **${result.stories.length} stories**:\n\n${result.stories.map((s, i) => `${i + 1}. **${s.title}** — ${s.description}`).join('\n')}\n\nSwipe through the cards on the right to review and edit each one. You can discuss any story here.`,
+                    options: [{ label: 'Save all stories' }, { label: 'Discard split' }],
+                  });
+                  toast({ title: '✂️ Epic split!', description: `${result.stories.length} stories generated.` });
+                } catch (e) {
+                  toast({ title: 'Split failed', description: e instanceof Error ? e.message : 'Unknown error', variant: 'destructive' });
+                } finally {
+                  setSplitting(false);
+                }
+              }}
+            >
+              <Scissors className="h-3.5 w-3.5" />
+              {splitting ? 'Splitting...' : 'Split Story'}
+            </Button>
           </div>
         )}
 

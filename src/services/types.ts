@@ -212,3 +212,13 @@ export interface SaveChecklistItemResponse {
   ruleId: UUID;
   saved: boolean;
 }
+
+export interface SplitStoryRequest {
+  story: StoryDraft;
+  agentContext: StoryAgentContext;
+}
+
+export interface SplitStoryResponse {
+  epicSummary: string;
+  stories: StoryDraft[];
+}
