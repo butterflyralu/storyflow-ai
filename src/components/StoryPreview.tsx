@@ -151,6 +151,7 @@ function EditableInline({ value, onSave, placeholder }: { value: string; onSave:
 export function StoryPreview() {
   const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory } = useWizard();
   const [saving, setSaving] = useState(false);
+  const [appliedFields, setAppliedFields] = useState<Set<StoryField>>(new Set());
 
   const formatForJira = () => {
     const lines = [`Title: ${story.title}`, '', `As a ${story.asA}, I want to ${story.iWant}, so that ${story.soThat}`];
@@ -180,11 +181,11 @@ export function StoryPreview() {
 
   const improved = evaluation?.improvedStory;
   const failItems = evaluation?.scorecard;
-  const titleAnnotations = getAnnotationsForField(failItems, 'title');
-  const userStoryAnnotations = getAnnotationsForField(failItems, 'userStory');
-  const soThatAnnotations = getAnnotationsForField(failItems, 'soThat');
-  const descAnnotations = getAnnotationsForField(failItems, 'description');
-  const acAnnotations = getAnnotationsForField(failItems, 'acceptanceCriteria');
+  const titleAnnotations = getAnnotationsForField(failItems, 'title').filter(() => !appliedFields.has('title'));
+  const userStoryAnnotations = getAnnotationsForField(failItems, 'userStory').filter(() => !appliedFields.has('userStory'));
+  const soThatAnnotations = getAnnotationsForField(failItems, 'soThat').filter(() => !appliedFields.has('soThat'));
+  const descAnnotations = getAnnotationsForField(failItems, 'description').filter(() => !appliedFields.has('description'));
+  const acAnnotations = getAnnotationsForField(failItems, 'acceptanceCriteria').filter(() => !appliedFields.has('acceptanceCriteria'));
   const unmatchedAnnotations = getAnnotationsForField(failItems, 'unmatched');
 
   const hasFailures = evaluation && evaluation.scorecard.some(i => i.result === 'FAIL');
@@ -199,6 +200,7 @@ export function StoryPreview() {
       case 'acceptanceCriteria': updateStory({ acceptanceCriteria: improved.acceptanceCriteria }); break;
       default: return;
     }
+    setAppliedFields(prev => new Set(prev).add(field));
     toast({ title: '✅ Applied', description: `Updated ${field} with the suggested improvement.` });
   };
 
