@@ -345,12 +345,24 @@ export const api = {
     return data as StoryAgentResponse;
   },
 
-  evaluateStory(input: EvaluateRequest): Promise<EvaluateResponse> {
-    if (USE_MOCKS) return mockEvaluateStory(input);
-    return request<EvaluateResponse>("/evaluate", {
-      method: "POST",
-      body: JSON.stringify(input),
+  async evaluateStory(input: EvaluateRequest): Promise<EvaluateResponse> {
+    const { data, error } = await supabase.functions.invoke('evaluate-story', {
+      body: {
+        story: input.story,
+        sessionId: input.sessionId,
+        contextId: input.contextId,
+      },
     });
+
+    if (error) {
+      throw new Error(error.message || 'Evaluation request failed');
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return data as EvaluateResponse;
   },
 
   getChecklist(contextId: string): Promise<GetChecklistResponse> {
