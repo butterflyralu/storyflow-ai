@@ -1,17 +1,40 @@
-// ---------------------------------------------------------------------------
-// Shared API types for PO Agent
-// ---------------------------------------------------------------------------
+export type UUID = string;
+
+export type ISODateString = string;
+
+export type ApiErrorCode =
+  | "missing_context"
+  | "context_not_found"
+  | "validation_error"
+  | "internal_error";
 
 export interface ApiError {
+  error: ApiErrorCode | string;
   message: string;
-  code?: string;
+  details?: Record<string, unknown>;
 }
 
-// --- Context ---
+export interface ProductContext {
+  contextId: UUID;
+  mission: string;
+  northStar: string;
+  persona: string;
+  strategy: string;
+  objectives: string;
+  lastUpdated: ISODateString;
+}
+
+export type ContextField =
+  | "mission"
+  | "northStar"
+  | "persona"
+  | "strategy"
+  | "objectives";
 
 export interface ValidateContextRequest {
-  field: string;
+  field: ContextField;
   value: string;
+  allContext: Omit<ProductContext, "contextId" | "lastUpdated">;
 }
 
 export interface ValidateContextResponse {
@@ -28,61 +51,44 @@ export interface SaveContextRequest {
 }
 
 export interface SaveContextResponse {
-  contextId: string;
+  contextId: UUID;
 }
 
-export interface UpdateContextRequest {
-  contextId: string;
-  field: string;
-  value: string;
+export interface UpdateContextRequest extends SaveContextRequest {
+  contextId: UUID;
 }
 
 export interface UpdateContextResponse {
   success: boolean;
-  lastUpdated: string;
+  lastUpdated: ISODateString;
 }
 
-export interface GetContextResponse {
-  contextId: string;
-  mission: string;
-  northStar: string;
-  persona: string;
-  strategy: string;
-  objectives: string;
-  lastUpdated: string;
-}
+export interface GetContextResponse extends ProductContext {}
 
-// --- Router ---
+export type RouterTrigger = "entry" | "post-eval";
+export type RouteType = "epic" | "story";
+export type Confidence = "high" | "low";
 
 export interface RouterRequest {
   message: string;
-  contextId?: string;
+  contextId: UUID;
+  trigger: RouterTrigger;
 }
 
 export interface RouterResponse {
-  route: "story" | "epic";
+  route: RouteType;
   mismatch: boolean;
   mismatchMessage: string;
-  classification: "story" | "epic";
-  confidence: "high" | "medium" | "low";
+  classification: RouteType;
+  confidence: Confidence;
   reason: string;
 }
 
-// --- Story Agent ---
+export type ChatRole = "user" | "assistant" | "system";
 
-export interface AcceptanceCriteriaGroup {
-  category: string;
-  items: string[];
-}
-
-export interface StoryDraftPayload {
-  title: string;
-  asA: string;
-  iWant: string;
-  soThat: string;
-  description: string;
-  acceptanceCriteria: AcceptanceCriteriaGroup[];
-  metadata?: StoryMetadata;
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
 }
 
 export interface StoryMetadata {
@@ -92,30 +98,56 @@ export interface StoryMetadata {
   estimate: string;
 }
 
+export interface StoryAcceptanceCriteriaCategory {
+  category: string;
+  items: string[];
+}
+
+export interface StoryDraft {
+  title: string;
+  asA: string;
+  iWant: string;
+  soThat: string;
+  description: string;
+  acceptanceCriteria: StoryAcceptanceCriteriaCategory[];
+  metadata: StoryMetadata;
+}
+
+export interface StoryAgentContext {
+  mission: string;
+  persona: string;
+  strategy: string;
+  northStar: string;
+  objectives: string;
+}
+
+export interface StoryAgentRequest {
+  message: string;
+  sessionId: UUID;
+  contextId: UUID;
+  agentContext: StoryAgentContext;
+  history: ChatMessage[];
+  storyDraft: StoryDraft;
+}
+
 export interface StoryAgentOption {
   label: string;
 }
 
-export interface StoryAgentRequest {
-  contextId: string;
-  message: string;
-  storyDraft: StoryDraftPayload;
-  chatHistory?: Array<{ role: string; content: string }>;
-}
-
 export interface StoryAgentResponse {
   message: string;
-  options: StoryAgentOption[];
+  options: StoryAgentOption[] | null;
   awaitingCriteriaConfirmation: boolean;
-  storyDraft: StoryDraftPayload;
+  storyDraft: StoryDraft;
 }
 
-// --- Evaluate ---
+export type ScoreResult = "PASS" | "FAIL";
+export type OverallResult = "PASS" | "FAIL";
 
-export interface ScorecardItem {
-  framework: string;
+export interface EvaluationScorecardItem {
+  framework: "INVEST" | "DoR" | "CustomerRules";
   criterion: string;
-  result: "PASS" | "FAIL" | "WARN";
+  result: ScoreResult;
   explanation: string;
 }
 
@@ -130,27 +162,25 @@ export interface NewChecklistRule {
 }
 
 export interface EvaluateRequest {
-  contextId: string;
-  storyDraft: StoryDraftPayload;
-  checklistRules?: string[];
+  sessionId: UUID;
+  contextId: UUID;
+  story: StoryDraft;
 }
 
 export interface EvaluateResponse {
-  scorecard: ScorecardItem[];
-  overallResult: "PASS" | "FAIL";
-  improvedStory: StoryDraftPayload;
+  scorecard: EvaluationScorecardItem[];
+  overallResult: OverallResult;
+  improvedStory: StoryDraft;
   learningInsight: LearningInsight;
-  newChecklistRule: NewChecklistRule;
+  newChecklistRule: NewChecklistRule | null;
   isLikelyEpic: boolean;
 }
 
-// --- Checklist ---
-
 export interface ChecklistItem {
-  ruleId: string;
+  ruleId: UUID;
   ruleText: string;
   active: boolean;
-  createdAt: string;
+  createdAt: ISODateString;
 }
 
 export interface GetChecklistResponse {
@@ -158,11 +188,11 @@ export interface GetChecklistResponse {
 }
 
 export interface SaveChecklistItemRequest {
-  contextId: string;
-  ruleText: string;
+  contextId: UUID;
+  rule: string;
 }
 
 export interface SaveChecklistItemResponse {
-  ruleId: string;
+  ruleId: UUID;
   saved: boolean;
 }
