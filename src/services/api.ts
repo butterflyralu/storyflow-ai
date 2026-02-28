@@ -17,6 +17,7 @@ import {
   ValidateContextRequest,
   ValidateContextResponse,
 } from "./types";
+import { supabase } from "@/integrations/supabase/client";
 
 const USE_MOCKS = true;
 
@@ -323,12 +324,25 @@ export const api = {
     });
   },
 
-  storyAgent(input: StoryAgentRequest): Promise<StoryAgentResponse> {
-    if (USE_MOCKS) return mockStoryAgent(input);
-    return request<StoryAgentResponse>("/story-agent", {
-      method: "POST",
-      body: JSON.stringify(input),
+  async storyAgent(input: StoryAgentRequest): Promise<StoryAgentResponse> {
+    const { data, error } = await supabase.functions.invoke('story-agent', {
+      body: {
+        message: input.message,
+        agentContext: input.agentContext,
+        history: input.history,
+        storyDraft: input.storyDraft,
+      },
     });
+
+    if (error) {
+      throw new Error(error.message || 'Story agent request failed');
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return data as StoryAgentResponse;
   },
 
   evaluateStory(input: EvaluateRequest): Promise<EvaluateResponse> {

@@ -147,6 +147,14 @@ export function ChatPanel() {
         }
         // User wants changes — options are already in the AI response
       }
+    } catch (err: any) {
+      const errMsg = err?.message || 'Something went wrong. Please try again.';
+      addMessage({
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        content: `⚠️ ${errMsg}`,
+        options: [{ label: 'Try again' }],
+      });
     } finally {
       setLoading(false);
     }
