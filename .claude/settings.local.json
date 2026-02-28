@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for f in ~/Desktop/PO Agent /docs/*.docx)",
+      "Bash(do)",
+      "Bash(python3 -c \":*)",
+      "Bash(done)"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.next/
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
