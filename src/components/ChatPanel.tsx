@@ -13,6 +13,7 @@ export function ChatPanel() {
   const {
     chatHistory, addMessage, story, updateStory,
     productContext, contextId, sessionId,
+    setEvaluation, setStep,
   } = useWizard();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -99,13 +100,53 @@ export function ChatPanel() {
         id: String(Date.now() + 1),
         role: 'assistant',
         content: response.message,
-        options: response.options,
+        options: response.awaitingCriteriaConfirmation ? undefined : response.options,
       };
       addMessage(aiMsg);
+
+      // Auto-trigger evaluation when criteria are confirmed
+      if (response.awaitingCriteriaConfirmation) {
+        const confirmLower = text.toLowerCase();
+        const isConfirm = confirmLower.includes('yes') || confirmLower.includes('looks good') || confirmLower.includes('good');
+        if (isConfirm) {
+          setLoading(true);
+          const evalMsg: UIChatMessage = {
+            id: String(Date.now() + 2),
+            role: 'assistant',
+            content: '⏳ Running quality evaluation...',
+          };
+          addMessage(evalMsg);
+          try {
+            const evalResult = await api.evaluateStory({
+              sessionId,
+              contextId: contextId || '',
+              story: response.storyDraft,
+            });
+            setEvaluation(evalResult);
+            setStep(3);
+          } catch {
+            addMessage({
+              id: String(Date.now() + 3),
+              role: 'assistant',
+              content: 'Evaluation failed. You can try again.',
+              options: [{ label: 'Yes, looks good' }],
+            });
+          }
+          return;
+        } else {
+          // User wants changes — show options to continue editing
+          addMessage({
+            id: String(Date.now() + 2),
+            role: 'assistant',
+            content: 'No problem — what would you like to change?',
+            options: [{ label: 'Change acceptance criteria' }, { label: 'Update the story description' }],
+          });
+        }
+      }
     } finally {
       setLoading(false);
     }
-  }, [loading, chatHistory, addMessage, updateStory, productContext, contextId, sessionId]);
+  }, [loading, chatHistory, addMessage, updateStory, productContext, contextId, sessionId, setEvaluation, setStep]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
