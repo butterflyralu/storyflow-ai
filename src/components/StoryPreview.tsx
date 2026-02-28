@@ -119,7 +119,7 @@ export function StoryPreview() {
   const { story, updateStory } = useWizard();
 
   return (
-    <Card className="h-full border-0 shadow-lg">
+    <Card className="flex h-full flex-col overflow-hidden border-0 shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Story Draft</CardTitle>
@@ -129,7 +129,7 @@ export function StoryPreview() {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="flex-1 space-y-1 overflow-y-auto">
         {/* Title */}
         {story.title && (
           <EditableField label="Title" value={story.title} onSave={v => updateStory({ title: v })} />
