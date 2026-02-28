@@ -2,7 +2,7 @@ import { useWizard } from '@/context/WizardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, X, Lightbulb, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Check, X, AlertTriangle, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function EvaluationCard() {
@@ -12,6 +12,7 @@ export function EvaluationCard() {
 
   const passCount = evaluation.scorecard.filter(c => c.result === 'PASS').length;
   const total = evaluation.scorecard.length;
+  const failures = evaluation.scorecard.filter(c => c.result === 'FAIL');
 
   return (
     <div className="space-y-4">
@@ -30,71 +31,60 @@ export function EvaluationCard() {
             <div
               key={i}
               className={cn(
-                'flex items-center gap-3 rounded-lg p-3',
+                'rounded-lg p-3',
                 item.result === 'PASS' ? 'bg-primary/5' : 'bg-destructive/5',
               )}
             >
-              <div
-                className={cn(
-                  'flex h-6 w-6 items-center justify-center rounded-full',
-                  item.result === 'PASS' ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive',
-                )}
-              >
-                {item.result === 'PASS' ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <span>{item.criterion}</span>
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">{item.framework}</Badge>
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full',
+                    item.result === 'PASS' ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive',
+                  )}
+                >
+                  {item.result === 'PASS' ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                 </div>
-                <div className="text-xs text-muted-foreground">{item.explanation}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <span>{item.criterion}</span>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{item.framework}</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground">{item.explanation}</div>
+                </div>
+                {item.result === 'FAIL' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
+                    onClick={() => setStep(2)}
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Fix
+                  </Button>
+                )}
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
 
-      {/* Learning Insight */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Lightbulb className="h-4 w-4 text-primary" />
-            Learning Insight
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-foreground">{evaluation.learningInsight.observation}</p>
-          <p className="text-sm text-muted-foreground italic">{evaluation.learningInsight.question}</p>
-          <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm text-foreground">
-            <ArrowRight className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
-            <span>{evaluation.learningInsight.suggestion}</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* New Checklist Rule */}
+      {/* Suggested Checklist Rule — compact inline */}
       {evaluation.newChecklistRule && (
-        <Card className="border-0 shadow-lg border-l-4 border-l-primary">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-2 text-sm">
-              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-              <div>
-                <div className="font-medium text-foreground">Suggested Checklist Rule</div>
-                <p className="mt-1 text-muted-foreground">{evaluation.newChecklistRule.rule}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+          <span className="text-muted-foreground">
+            <span className="font-medium text-foreground">New rule: </span>
+            {evaluation.newChecklistRule.rule}
+          </span>
+        </div>
       )}
 
       {/* Epic Warning */}
       {evaluation.isLikelyEpic && (
-        <Card className="border-0 shadow-lg bg-destructive/5">
-          <CardContent className="flex items-center gap-2 p-4 text-sm text-foreground">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            This story may be too large — consider splitting it into smaller stories.
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 rounded-lg bg-destructive/5 px-4 py-3 text-sm text-foreground">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          This story may be too large — consider splitting it into smaller stories.
+        </div>
       )}
 
       {/* Actions */}
@@ -107,6 +97,11 @@ export function EvaluationCard() {
           className="flex-1"
         >
           Accept Improved Version
+          {failures.length > 0 && (
+            <Badge variant="secondary" className="ml-2 text-[10px]">
+              {failures.length} fixed
+            </Badge>
+          )}
         </Button>
         <Button
           variant="secondary"
