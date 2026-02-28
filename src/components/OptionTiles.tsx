@@ -13,9 +13,9 @@ export function OptionTiles({ options, onSelect }: Props) {
           key={opt.label}
           onClick={() => onSelect(opt.label)}
           className={cn(
-            'rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium',
-            'text-foreground shadow-sm transition-all duration-150',
-            'hover:border-primary/40 hover:bg-primary/5 hover:shadow-md',
+            'rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-medium',
+            'text-foreground shadow-soft transition-all duration-200',
+            'hover:border-primary/30 hover:bg-peach-light hover:shadow-soft-lg',
             'active:scale-[0.97]',
           )}
         >

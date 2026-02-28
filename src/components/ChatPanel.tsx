@@ -48,7 +48,6 @@ export function ChatPanel() {
 
     const lower = text.toLowerCase();
 
-    // Handle local actions without hitting the API
     if (lower.includes('save this story')) {
       try {
         await new Promise(r => setTimeout(r, 500));
@@ -69,7 +68,6 @@ export function ChatPanel() {
     setLoading(true);
 
     try {
-      // Build chat history for the API
       const history = [...chatHistory, userMsg].map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
@@ -107,7 +105,6 @@ export function ChatPanel() {
         },
       });
 
-      // Update story draft from agent response
       updateStory(response.storyDraft);
 
       const aiMsg: UIChatMessage = {
@@ -118,7 +115,6 @@ export function ChatPanel() {
       };
       addMessage(aiMsg);
 
-      // Auto-trigger evaluation when criteria are confirmed
       if (response.awaitingCriteriaConfirmation) {
         const confirmLower = text.toLowerCase();
         const isConfirm = confirmLower.includes('yes') || confirmLower.includes('looks good') || confirmLower.includes('good');
@@ -152,7 +148,6 @@ export function ChatPanel() {
           }
           return;
         }
-        // User wants changes — options are already in the AI response
       }
     } catch (err: any) {
       const errMsg = err?.message || 'Something went wrong. Please try again.';
@@ -173,8 +168,8 @@ export function ChatPanel() {
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <ScrollArea className="flex-1 px-4 py-4">
+    <div className="flex h-full flex-col bg-card/50">
+      <ScrollArea className="flex-1 px-5 py-5">
         <div className="space-y-4">
           {chatHistory.map(msg => (
             <div
@@ -186,10 +181,10 @@ export function ChatPanel() {
             >
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                  'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-soft',
                   msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-br-md'
-                    : 'bg-muted text-foreground rounded-bl-md',
+                    ? 'bg-primary text-primary-foreground rounded-br-sm'
+                    : 'bg-card text-foreground rounded-bl-sm border border-border',
                 )}
               >
                 <div className="whitespace-pre-wrap">{msg.content}</div>
@@ -203,7 +198,7 @@ export function ChatPanel() {
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-3">
+              <div className="rounded-2xl rounded-bl-sm bg-card border border-border px-4 py-3 shadow-soft">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             </div>
@@ -212,16 +207,16 @@ export function ChatPanel() {
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="border-t border-border p-4">
+      <form onSubmit={handleSubmit} className="border-t border-border bg-card p-4">
         <div className="flex gap-2">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="flex-1 rounded-xl border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={loading}
           />
-          <Button type="submit" size="icon" disabled={!input.trim() || loading}>
+          <Button type="submit" size="icon" disabled={!input.trim() || loading} className="rounded-xl h-10 w-10">
             <Send className="h-4 w-4" />
           </Button>
         </div>
