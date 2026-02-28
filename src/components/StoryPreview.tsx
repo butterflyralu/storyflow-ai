@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Pencil, Check, X, AlertTriangle } from 'lucide-react';
-import type { EvaluationScorecardItem } from '@/services/types';
+import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 
 type StoryField = 'title' | 'userStory' | 'soThat' | 'description' | 'acceptanceCriteria' | 'unmatched';
 
@@ -19,12 +19,48 @@ function mapCriterionToField(criterion: string): StoryField {
   return 'unmatched';
 }
 
-function InlineAnnotation({ item }: { item: EvaluationScorecardItem }) {
+function getImprovedText(field: StoryField, improved: StoryDraft): string | null {
+  switch (field) {
+    case 'title': return improved.title || null;
+    case 'soThat': return improved.soThat || null;
+    case 'description': return improved.description || null;
+    case 'userStory': return [improved.asA, improved.iWant, improved.soThat].filter(Boolean).join(' · ') || null;
+    case 'acceptanceCriteria':
+      return improved.acceptanceCriteria.flatMap(g => g.items).join('; ') || null;
+    default: return null;
+  }
+}
+
+function InlineAnnotation({
+  item, improvedStory, onApply,
+}: {
+  item: EvaluationScorecardItem;
+  improvedStory?: StoryDraft;
+  onApply?: () => void;
+}) {
+  const field = mapCriterionToField(item.criterion);
+  const suggestion = improvedStory ? getImprovedText(field, improvedStory) : null;
+
   return (
-    <div className="mt-1 border-l-2 border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 pl-2 py-1">
+    <div className="mt-1 border-l-2 border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 pl-2 py-1.5">
       <div className="flex items-start gap-1.5 text-xs">
         <AlertTriangle className="mt-0.5 h-3 w-3 flex-shrink-0 text-amber-500" />
-        <span className="text-muted-foreground">{item.explanation}</span>
+        <div className="flex-1 space-y-1">
+          <span className="text-muted-foreground">{item.explanation}</span>
+          {suggestion && (
+            <div className="flex items-start gap-2 rounded bg-background/80 px-2 py-1.5 border border-border">
+              <span className="flex-1 text-xs text-foreground italic">"{suggestion}"</span>
+              {onApply && (
+                <button
+                  onClick={onApply}
+                  className="flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  Apply
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -39,10 +75,12 @@ function getAnnotationsForField(
 }
 
 function EditableField({
-  label, value, onSave, multiline = false, annotations,
+  label, value, onSave, multiline = false, annotations, improvedStory, onApplyField,
 }: {
   label: string; value: string; onSave: (val: string) => void; multiline?: boolean;
   annotations?: EvaluationScorecardItem[];
+  improvedStory?: StoryDraft;
+  onApplyField?: (field: StoryField) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -74,12 +112,16 @@ function EditableField({
           </button>
         </div>
       )}
-      {annotations?.map((a, i) => <InlineAnnotation key={i} item={a} />)}
+      {annotations?.map((a, i) => (
+        <InlineAnnotation key={i} item={a} improvedStory={improvedStory}
+          onApply={onApplyField ? () => onApplyField(mapCriterionToField(a.criterion)) : undefined} />
+      ))}
     </div>
   );
 }
 
 function EditableInline({ value, onSave, placeholder }: { value: string; onSave: (val: string) => void; placeholder: string }) {
+// ... keep existing code
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const save = () => { onSave(draft); setEditing(false); };
@@ -108,6 +150,7 @@ function EditableInline({ value, onSave, placeholder }: { value: string; onSave:
 export function StoryPreview() {
   const { story, updateStory, evaluation, setStory, setStep, setEvaluation } = useWizard();
 
+  const improved = evaluation?.improvedStory;
   const failItems = evaluation?.scorecard;
   const titleAnnotations = getAnnotationsForField(failItems, 'title');
   const userStoryAnnotations = getAnnotationsForField(failItems, 'userStory');
@@ -117,6 +160,17 @@ export function StoryPreview() {
   const unmatchedAnnotations = getAnnotationsForField(failItems, 'unmatched');
 
   const hasFailures = evaluation && evaluation.scorecard.some(i => i.result === 'FAIL');
+
+  const applyField = (field: StoryField) => {
+    if (!improved) return;
+    switch (field) {
+      case 'title': updateStory({ title: improved.title }); break;
+      case 'soThat': updateStory({ soThat: improved.soThat }); break;
+      case 'description': updateStory({ description: improved.description }); break;
+      case 'userStory': updateStory({ asA: improved.asA, iWant: improved.iWant, soThat: improved.soThat }); break;
+      case 'acceptanceCriteria': updateStory({ acceptanceCriteria: improved.acceptanceCriteria }); break;
+    }
+  };
 
   return (
     <Card className="flex h-full flex-col overflow-hidden border-0 shadow-lg">
@@ -130,14 +184,14 @@ export function StoryPreview() {
               </Badge>
             )}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
-            <Badge variant="secondary">{story.metadata.estimate || '—'}</Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 space-y-1 overflow-y-auto">
         {/* Title */}
         {story.title && (
-          <EditableField label="Title" value={story.title} onSave={v => updateStory({ title: v })} annotations={titleAnnotations} />
+          <EditableField label="Title" value={story.title} onSave={v => updateStory({ title: v })}
+            annotations={titleAnnotations} improvedStory={improved} onApplyField={applyField} />
         )}
 
         {/* User Story block */}
@@ -157,11 +211,16 @@ export function StoryPreview() {
               <EditableInline value={story.soThat} onSave={v => updateStory({ soThat: v })} placeholder="[value]" />
             </div>
           </div>
-          {soThatAnnotations.map((a, i) => <InlineAnnotation key={`so-${i}`} item={a} />)}
-          {userStoryAnnotations.map((a, i) => <InlineAnnotation key={`us-${i}`} item={a} />)}
+          {soThatAnnotations.map((a, i) => (
+            <InlineAnnotation key={`so-${i}`} item={a} improvedStory={improved} onApply={() => applyField(mapCriterionToField(a.criterion))} />
+          ))}
+          {userStoryAnnotations.map((a, i) => (
+            <InlineAnnotation key={`us-${i}`} item={a} improvedStory={improved} onApply={() => applyField(mapCriterionToField(a.criterion))} />
+          ))}
         </div>
 
-        <EditableField label="Description" value={story.description} onSave={v => updateStory({ description: v })} multiline annotations={descAnnotations} />
+        <EditableField label="Description" value={story.description} onSave={v => updateStory({ description: v })} multiline
+          annotations={descAnnotations} improvedStory={improved} onApplyField={applyField} />
 
         {/* Acceptance Criteria */}
         <div className="rounded-lg border border-transparent p-3 transition-colors hover:border-border hover:bg-muted/30">
@@ -185,13 +244,17 @@ export function StoryPreview() {
           ) : (
             <p className="text-sm italic text-muted-foreground">No criteria yet...</p>
           )}
-          {acAnnotations.map((a, i) => <InlineAnnotation key={`ac-${i}`} item={a} />)}
+          {acAnnotations.map((a, i) => (
+            <InlineAnnotation key={`ac-${i}`} item={a} improvedStory={improved} onApply={() => applyField('acceptanceCriteria')} />
+          ))}
         </div>
 
         {/* Unmatched annotations */}
         {unmatchedAnnotations.length > 0 && (
           <div className="p-3">
-            {unmatchedAnnotations.map((a, i) => <InlineAnnotation key={`un-${i}`} item={a} />)}
+            {unmatchedAnnotations.map((a, i) => (
+              <InlineAnnotation key={`un-${i}`} item={a} improvedStory={improved} />
+            ))}
           </div>
         )}
 
@@ -207,7 +270,7 @@ export function StoryPreview() {
         {evaluation && (
           <div className="flex gap-2 border-t border-border pt-3 mt-2">
             <Button size="sm" onClick={() => { setStory(evaluation.improvedStory); setEvaluation(null); setStep(3); }} className="flex-1">
-              Accept Improved
+              Accept All Improvements
               {hasFailures && <Badge variant="secondary" className="ml-1.5 text-[10px]">{evaluation.scorecard.filter(i => i.result === 'FAIL').length} fixed</Badge>}
             </Button>
             <Button size="sm" variant="secondary" onClick={() => { setEvaluation(null); setStep(3); }} className="flex-1">
