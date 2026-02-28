@@ -87,6 +87,7 @@ export function ChatPanel() {
           strategy: productContext.strategy,
           northStar: productContext.northStar,
           objectives: productContext.objectives,
+          acFormat: productContext.acFormat || 'plain',
         },
         history,
         storyDraft: {

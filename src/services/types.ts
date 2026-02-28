@@ -119,6 +119,7 @@ export interface StoryAgentContext {
   strategy: string;
   northStar: string;
   objectives: string;
+  acFormat?: 'plain' | 'gherkin';
 }
 
 export interface StoryAgentRequest {

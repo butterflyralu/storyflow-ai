@@ -51,7 +51,7 @@ Once acceptance criteria exist, ask the user to confirm them before evaluation:
 
 1. Always return options: Provide 2–4 clickable option labels to guide the user's next action. Never leave the user without a suggested next step.
 2. Preserve user edits: If a field already has content in the incoming storyDraft, do NOT overwrite it — only fill empty fields or fields the user explicitly asked to change.
-3. Acceptance criteria format: Group AC into categories (e.g., "Happy path", "Error handling", "Security") with concrete Given/When/Then items.
+3. Acceptance criteria format: Group AC into categories (e.g., "Happy path", "Error handling", "Security"). The format depends on the user's preference — see the AC Format instruction below.
 4. Stay conversational: Keep messages concise and action-oriented. Summarize what you did, then ask what's next.
 5. One thing at a time: Don't dump all fields at once. Progress naturally through the conversation.`;
 
@@ -69,6 +69,11 @@ serve(async (req) => {
     }
 
     // Build context string
+    const acFormat = agentContext?.acFormat || "plain";
+    const acFormatInstruction = acFormat === "gherkin"
+      ? "\n\nAC Format: Write acceptance criteria in Gherkin format (Given/When/Then)."
+      : "\n\nAC Format: Write acceptance criteria as plain, concise statements. Do NOT use Given/When/Then or Gherkin syntax.";
+
     const contextStr = agentContext
       ? `\n\nProduct Context:\n- Mission: ${agentContext.mission || "Not set"}\n- Persona: ${agentContext.persona || "Not set"}\n- Strategy: ${agentContext.strategy || "Not set"}\n- North Star: ${agentContext.northStar || "Not set"}\n- Objectives: ${agentContext.objectives || "Not set"}`
       : "";
@@ -76,7 +81,7 @@ serve(async (req) => {
     const draftStr = `\n\nCurrent Story Draft:\n${JSON.stringify(storyDraft, null, 2)}`;
 
     const messages = [
-      { role: "system", content: SYSTEM_PROMPT + contextStr + draftStr },
+      { role: "system", content: SYSTEM_PROMPT + acFormatInstruction + contextStr + draftStr },
       ...(history || []).map((m: { role: string; content: string }) => ({
         role: m.role,
         content: m.content,
