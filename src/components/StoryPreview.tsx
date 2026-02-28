@@ -224,10 +224,12 @@ export function StoryPreview() {
             {evaluation && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-xs cursor-pointer gap-1 hover:opacity-80 transition-opacity">
-                    {evaluation.scorecard.filter(i => i.result === 'PASS').length}/{evaluation.scorecard.length} passed
-                    <Info className="h-3 w-3" />
-                  </Badge>
+                  <button type="button" className="inline-flex">
+                    <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-xs cursor-pointer gap-1 hover:opacity-80 transition-opacity">
+                      {evaluation.scorecard.filter(i => i.result === 'PASS').length}/{evaluation.scorecard.length} passed
+                      <Info className="h-3 w-3" />
+                    </Badge>
+                  </button>
                 </PopoverTrigger>
                 <PopoverContent side="bottom" align="end" className="max-w-sm p-4">
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Evaluation Scorecard</div>
