@@ -155,6 +155,7 @@ export interface StoryAgentResponse {
   options: StoryAgentOption[] | null;
   awaitingCriteriaConfirmation: boolean;
   storyDraft: StoryDraft;
+  confirmSplit?: number[] | null;
 }
 
 export type ScoreResult = "PASS" | "FAIL";

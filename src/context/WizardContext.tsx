@@ -20,6 +20,7 @@ interface WizardState {
   splitStories: StoryDraft[];
   activeSplitIndex: number;
   epicSummary: string | null;
+  pendingSplitStories: StoryDraft[];
 }
 
 interface WizardActions {
@@ -38,6 +39,9 @@ interface WizardActions {
   setEpicSummary: (summary: string | null) => void;
   clearSplit: () => void;
   removeSplitStory: (index: number) => void;
+  setPendingSplitStories: (stories: StoryDraft[]) => void;
+  confirmSplitStories: (indices: number[]) => void;
+  clearPendingSplit: () => void;
 }
 
 const WizardContext = createContext<(WizardState & WizardActions) | null>(null);
@@ -54,6 +58,7 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
   const [splitStories, setSplitStoriesState] = useState<StoryDraft[]>([]);
   const [activeSplitIndex, setActiveSplitIndex] = useState(0);
   const [epicSummary, setEpicSummary] = useState<string | null>(null);
+  const [pendingSplitStories, setPendingSplitStoriesState] = useState<StoryDraft[]>([]);
 
   const updateStory = useCallback((update: Partial<StoryDraft>) => {
     setStoryState(prev => ({ ...prev, ...update }));
@@ -99,6 +104,23 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     setActiveSplitIndex(prev => Math.min(prev, Math.max(0, splitStories.length - 2)));
   }, [splitStories.length]);
 
+  const setPendingSplitStories = useCallback((stories: StoryDraft[]) => {
+    setPendingSplitStoriesState(stories);
+  }, []);
+
+  const confirmSplitStories = useCallback((indices: number[]) => {
+    setPendingSplitStoriesState(prev => {
+      const selected = indices.map(i => prev[i]).filter(Boolean);
+      setSplitStoriesState(selected);
+      setActiveSplitIndex(0);
+      return [];
+    });
+  }, []);
+
+  const clearPendingSplit = useCallback(() => {
+    setPendingSplitStoriesState([]);
+  }, []);
+
   return (
     <WizardContext.Provider
       value={{
@@ -116,6 +138,8 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
         updateSplitStory, clearSplit,
         epicSummary, setEpicSummary,
         removeSplitStory,
+        pendingSplitStories, setPendingSplitStories,
+        confirmSplitStories, clearPendingSplit,
       }}
     >
       {children}
