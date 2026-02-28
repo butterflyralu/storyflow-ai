@@ -40,7 +40,7 @@ export function ChatPanel() {
     try {
       // Use ref to get the latest story state (includes storyUpdates from previous messages)
       const currentStory = storyRef.current;
-      const response = await mockAIChat(text, currentStory);
+      const response = await mockAIChat(text, currentStory, productContext);
       addMessage(response);
     } finally {
       setLoading(false);
