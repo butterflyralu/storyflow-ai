@@ -54,6 +54,7 @@ const FIELDS: Array<{
 ];
 
 export function ContextWizard() {
+  const TOTAL_STEPS = FIELDS.length + 1; // +1 for AC format step
   const { setProductContext, setContextId, setStep } = useWizard();
   const [fieldIndex, setFieldIndex] = useState(0);
   const [values, setValues] = useState<ProductContextInput>({
@@ -62,20 +63,22 @@ export function ContextWizard() {
     persona: '',
     strategy: '',
     objectives: '',
+    acFormat: 'plain',
   });
   const [validating, setValidating] = useState(false);
   const [validationMsg, setValidationMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const field = FIELDS[fieldIndex];
-  const isLast = fieldIndex === FIELDS.length - 1;
-  const currentValue = values[field.key];
+  const isOnAcStep = fieldIndex === FIELDS.length;
+  const field = isOnAcStep ? null : FIELDS[fieldIndex];
+  const isLast = isOnAcStep;
+  const currentValue = field ? values[field.key] : '';
 
   const validateAndNext = async (valueToUse: string) => {
+    if (!field) return;
     const updatedValues = { ...values, [field.key]: valueToUse };
     setValues(updatedValues);
 
-    // Validate through the API
     setValidating(true);
     setValidationMsg(null);
     try {
@@ -90,98 +93,118 @@ export function ContextWizard() {
         return;
       }
     } catch {
-      // Continue on validation error (don't block the user)
+      // Continue on validation error
     }
     setValidating(false);
+    setFieldIndex(i => i + 1);
+    setValidationMsg(null);
+  };
 
-    if (isLast) {
-      setSaving(true);
-      try {
-        const { contextId } = await api.saveContext(updatedValues);
-        setContextId(contextId);
-      } catch {
-        // continue even if save fails in mock mode
-      }
-      setSaving(false);
-      setProductContext(updatedValues);
-      setStep(2);
-    } else {
-      setFieldIndex(i => i + 1);
-      setValidationMsg(null);
+  const finalize = async () => {
+    setSaving(true);
+    try {
+      const { contextId } = await api.saveContext(values);
+      setContextId(contextId);
+    } catch {
+      // continue even if save fails in mock mode
     }
+    setSaving(false);
+    setProductContext(values);
+    setStep(2);
   };
 
   const handleNext = () => validateAndNext(currentValue);
-
-  const handleSkip = () => validateAndNext(field.defaultValue);
+  const handleSkip = () => field ? validateAndNext(field.defaultValue) : undefined;
 
   const busy = validating || saving;
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
       <div className="mb-6 text-sm font-medium text-muted-foreground">
-        {fieldIndex + 1} of {FIELDS.length}
+        {fieldIndex + 1} of {TOTAL_STEPS}
       </div>
 
       <Card className="w-full max-w-xl border-0 shadow-lg">
         <CardContent className="p-8">
-          <h2 className="mb-2 text-2xl font-semibold tracking-tight text-foreground">
-            {field.label}
-          </h2>
-          <p className="mb-6 text-sm text-muted-foreground">{field.helper}</p>
+          {isOnAcStep ? (
+            <>
+              <h2 className="mb-2 text-2xl font-semibold tracking-tight text-foreground">
+                Acceptance Criteria Format
+              </h2>
+              <p className="mb-6 text-sm text-muted-foreground">
+                How should acceptance criteria be written in your stories?
+              </p>
+              <div className="flex gap-3">
+                {([
+                  { value: 'plain' as const, label: 'Plain Text', desc: 'Simple bullet-point criteria' },
+                  { value: 'gherkin' as const, label: 'Gherkin', desc: 'Given / When / Then format' },
+                ]).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setValues(prev => ({ ...prev, acFormat: opt.value }))}
+                    className={cn(
+                      'flex-1 rounded-lg border-2 p-4 text-left transition-all',
+                      values.acFormat === opt.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/30',
+                    )}
+                  >
+                    <div className="text-sm font-semibold text-foreground">{opt.label}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{opt.desc}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-6 flex justify-end">
+                <Button onClick={finalize} disabled={busy} className={cn('transition-all duration-200', !busy && 'shadow-md')}>
+                  {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <ArrowRight className="ml-1 h-4 w-4" />}
+                  {saving ? 'Saving...' : 'Start Drafting'}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="mb-2 text-2xl font-semibold tracking-tight text-foreground">
+                {field!.label}
+              </h2>
+              <p className="mb-6 text-sm text-muted-foreground">{field!.helper}</p>
 
-          <Textarea
-            value={currentValue}
-            onChange={e => {
-              setValues(prev => ({ ...prev, [field.key]: e.target.value }));
-              setValidationMsg(null);
-            }}
-            placeholder={field.placeholder}
-            className="min-h-[100px] resize-none text-base"
-            autoFocus
-          />
+              <Textarea
+                value={currentValue}
+                onChange={e => {
+                  setValues(prev => ({ ...prev, [field!.key]: e.target.value }));
+                  setValidationMsg(null);
+                }}
+                placeholder={field!.placeholder}
+                className="min-h-[100px] resize-none text-base"
+                autoFocus
+              />
 
-          {validationMsg && (
-            <div className="mt-2 flex items-center gap-1.5 text-sm text-destructive">
-              <AlertCircle className="h-3.5 w-3.5" />
-              {validationMsg}
-            </div>
+              {validationMsg && (
+                <div className="mt-2 flex items-center gap-1.5 text-sm text-destructive">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {validationMsg}
+                </div>
+              )}
+
+              <div className="mt-6 flex items-center justify-between">
+                <Button variant="ghost" size="sm" onClick={handleSkip} disabled={busy} className="text-muted-foreground">
+                  <SkipForward className="mr-1 h-4 w-4" />
+                  Skip with default
+                </Button>
+                <Button onClick={handleNext} disabled={!currentValue.trim() || busy}
+                  className={cn('transition-all duration-200', currentValue.trim() && !busy && 'shadow-md')}>
+                  {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <ArrowRight className="ml-1 h-4 w-4" />}
+                  Next
+                </Button>
+              </div>
+            </>
           )}
-
-          <div className="mt-6 flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSkip}
-              disabled={busy}
-              className="text-muted-foreground"
-            >
-              <SkipForward className="mr-1 h-4 w-4" />
-              Skip with default
-            </Button>
-
-            <Button
-              onClick={handleNext}
-              disabled={!currentValue.trim() || busy}
-              className={cn(
-                'transition-all duration-200',
-                currentValue.trim() && !busy && 'shadow-md',
-              )}
-            >
-              {busy ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : (
-                <ArrowRight className="ml-1 h-4 w-4" />
-              )}
-              {saving ? 'Saving...' : isLast ? 'Start Drafting' : 'Next'}
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
       {/* Progress dots */}
       <div className="mt-8 flex gap-2">
-        {FIELDS.map((_, i) => (
+        {Array.from({ length: TOTAL_STEPS }, (_, i) => (
           <div
             key={i}
             className={cn(

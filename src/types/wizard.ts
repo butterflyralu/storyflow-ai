@@ -26,7 +26,9 @@ export type WizardStep = 1 | 2 | 3;
  * Product context used internally in the wizard (no contextId/lastUpdated
  * until saved via the API).
  */
-export type ProductContextInput = SaveContextRequest;
+export type ProductContextInput = SaveContextRequest & {
+  acFormat: 'plain' | 'gherkin';
+};
 
 /** Chat message with UI extras (id for keys, options for tiles). */
 export interface UIChatMessage {
@@ -53,4 +55,5 @@ export const EMPTY_CONTEXT: ProductContextInput = {
   persona: '',
   strategy: '',
   objectives: '',
+  acFormat: 'plain',
 };
