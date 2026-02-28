@@ -77,6 +77,49 @@ function EditableField({
     </div>
   );
 }
+function EditableInline({
+  value,
+  onSave,
+  placeholder,
+}: {
+  value: string;
+  onSave: (val: string) => void;
+  placeholder: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  const save = () => { onSave(draft); setEditing(false); };
+  const cancel = () => { setDraft(value); setEditing(false); };
+
+  if (editing) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <input
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          className="rounded border border-input bg-background px-1.5 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          autoFocus
+          onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); }}
+        />
+        <button onClick={save} className="rounded p-0.5 text-primary hover:bg-primary/10"><Check className="h-3 w-3" /></button>
+        <button onClick={cancel} className="rounded p-0.5 text-muted-foreground hover:bg-muted"><X className="h-3 w-3" /></button>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      onClick={() => { setDraft(value); setEditing(true); }}
+      className={cn(
+        'cursor-pointer rounded px-1 py-0.5 transition-colors hover:bg-muted',
+        value ? 'text-foreground' : 'italic text-muted-foreground',
+      )}
+    >
+      {value || placeholder}
+    </span>
+  );
+}
 
 export function StoryPreview() {
   const { story, updateStory } = useWizard();
@@ -93,9 +136,27 @@ export function StoryPreview() {
         </div>
       </CardHeader>
       <CardContent className="space-y-1">
-        <EditableField label="As a..." value={story.asA} onSave={v => updateStory({ asA: v })} />
-        <EditableField label="I want to..." value={story.iWant} onSave={v => updateStory({ iWant: v })} />
-        <EditableField label="So that..." value={story.soThat} onSave={v => updateStory({ soThat: v })} />
+        {/* Unified User Story block */}
+        <div className="rounded-lg border border-border bg-muted/20 p-4">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            User Story
+          </div>
+          <div className="space-y-1 text-sm">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-semibold text-foreground">As a</span>
+              <EditableInline value={story.asA} onSave={v => updateStory({ asA: v })} placeholder="[role]" />,
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-semibold text-foreground">I want to</span>
+              <EditableInline value={story.iWant} onSave={v => updateStory({ iWant: v })} placeholder="[capability]" />,
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-semibold text-foreground">So that</span>
+              <EditableInline value={story.soThat} onSave={v => updateStory({ soThat: v })} placeholder="[value]" />
+            </div>
+          </div>
+        </div>
+
         <EditableField label="Description" value={story.description} onSave={v => updateStory({ description: v })} multiline />
 
         <div className="rounded-lg border border-transparent p-3 transition-colors hover:border-border hover:bg-muted/30">
