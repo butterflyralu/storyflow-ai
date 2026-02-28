@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
-import { ArrowLeft, Save, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, X, Check, ClipboardCheck, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import type { StoryDraft } from '@/services/types';
+import { api } from '@/services/api';
+import { cn } from '@/lib/utils';
+import type { StoryDraft, EvaluateResponse } from '@/services/types';
 
 function StoryCard({
   story,
@@ -14,13 +16,43 @@ function StoryCard({
   total,
   onUpdate,
   onRemove,
+  onSave,
+  isSaved,
+  sessionId,
+  contextId,
 }: {
   story: StoryDraft;
   index: number;
   total: number;
   onUpdate: (update: Partial<StoryDraft>) => void;
   onRemove: () => void;
+  onSave: () => void;
+  isSaved: boolean;
+  sessionId: string;
+  contextId: string | null;
 }) {
+  const [evaluating, setEvaluating] = useState(false);
+  const [evaluation, setEvaluation] = useState<EvaluateResponse | null>(null);
+
+  const handleEvaluate = async () => {
+    setEvaluating(true);
+    try {
+      const result = await api.evaluateStory({
+        story,
+        sessionId,
+        contextId: contextId || '',
+      });
+      setEvaluation(result);
+    } catch (e) {
+      toast({ title: 'Evaluation failed', description: e instanceof Error ? e.message : 'Unknown error', variant: 'destructive' });
+    } finally {
+      setEvaluating(false);
+    }
+  };
+
+  const passCount = evaluation?.scorecard.filter(c => c.result === 'PASS').length ?? 0;
+  const totalCriteria = evaluation?.scorecard.length ?? 0;
+
   return (
     <Card className="flex h-full flex-col border shadow-md">
       <CardHeader className="pb-2">
@@ -28,9 +60,16 @@ function StoryCard({
           <Badge variant="outline" className="text-xs">
             {index + 1} of {total}
           </Badge>
-          <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={onRemove}>
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {isSaved && (
+              <Badge variant="default" className="text-xs gap-1">
+                <Check className="h-3 w-3" /> Saved
+              </Badge>
+            )}
+            <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={onRemove}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
         <input
           value={story.title}
@@ -84,7 +123,7 @@ function StoryCard({
             onChange={e => onUpdate({ description: e.target.value })}
             className="w-full resize-y rounded border-0 bg-transparent px-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-h-[3rem]"
             placeholder="Story description..."
-            rows={3}
+            rows={2}
           />
         </div>
 
@@ -108,12 +147,76 @@ function StoryCard({
               ))}
             </div>
           ) : (
-            <p className="text-sm italic text-muted-foreground">
-              No criteria yet — discuss this story in chat to add them.
-            </p>
+            <p className="text-sm italic text-muted-foreground">No criteria yet.</p>
           )}
         </div>
+
+        {/* Inline Evaluation Results */}
+        {evaluation && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Evaluation</div>
+              <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-[10px]">
+                {passCount}/{totalCriteria} passed
+              </Badge>
+            </div>
+            {evaluation.scorecard.map((item, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'rounded p-2 text-xs',
+                  item.result === 'PASS' ? 'bg-primary/5' : 'bg-destructive/5',
+                )}
+              >
+                <div className="flex items-center gap-1.5">
+                  <div className={cn(
+                    'flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full',
+                    item.result === 'PASS' ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive',
+                  )}>
+                    {item.result === 'PASS' ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
+                  </div>
+                  <span className="font-medium text-foreground">{item.criterion}</span>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0">{item.framework}</Badge>
+                </div>
+                <div className="mt-0.5 pl-5.5 text-muted-foreground">{item.explanation}</div>
+              </div>
+            ))}
+            {evaluation.improvedStory && evaluation.overallResult === 'FAIL' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full text-xs mt-1"
+                onClick={() => onUpdate(evaluation.improvedStory)}
+              >
+                Apply Improved Version
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
+
+      {/* Per-card action buttons */}
+      <div className="border-t border-border px-4 py-2 flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1 gap-1 text-xs"
+          onClick={handleEvaluate}
+          disabled={evaluating}
+        >
+          {evaluating ? <Loader2 className="h-3 w-3 animate-spin" /> : <ClipboardCheck className="h-3 w-3" />}
+          {evaluating ? 'Evaluating…' : 'Evaluate'}
+        </Button>
+        <Button
+          size="sm"
+          className="flex-1 gap-1 text-xs"
+          onClick={onSave}
+          disabled={isSaved}
+        >
+          <Save className="h-3 w-3" />
+          {isSaved ? 'Saved' : 'Save'}
+        </Button>
+      </div>
     </Card>
   );
 }
@@ -130,15 +233,28 @@ export function SplitStoriesView() {
     saveStory,
     addMessage,
     story: originalStory,
+    sessionId,
+    contextId,
   } = useWizard();
 
   const [saving, setSaving] = useState(false);
+  const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set());
 
   if (splitStories.length === 0) return null;
 
+  const handleSaveOne = (index: number) => {
+    saveStory(splitStories[index]);
+    setSavedIndices(prev => new Set(prev).add(index));
+    toast({ title: '✅ Story saved', description: `"${splitStories[index].title}" has been saved.` });
+  };
+
   const handleSaveAll = async () => {
     setSaving(true);
-    splitStories.forEach(s => saveStory(s));
+    splitStories.forEach((s, i) => {
+      if (!savedIndices.has(i)) {
+        saveStory(s);
+      }
+    });
     await new Promise(r => setTimeout(r, 400));
     setSaving(false);
     toast({ title: '✅ All stories saved!', description: `${splitStories.length} stories have been saved.` });
@@ -201,6 +317,10 @@ export function SplitStoriesView() {
                     total={splitStories.length}
                     onUpdate={(update) => updateSplitStory(i, update)}
                     onRemove={() => handleRemove(i)}
+                    onSave={() => handleSaveOne(i)}
+                    isSaved={savedIndices.has(i)}
+                    sessionId={sessionId}
+                    contextId={contextId}
                   />
                 </div>
               </CarouselItem>
