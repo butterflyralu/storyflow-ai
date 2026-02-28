@@ -64,6 +64,13 @@ After drafting title/asA/iWant, ask the user to provide the business value. Coac
 ### Phase 3: Clarification
 Before generating acceptance criteria, ask at least one clarifying question about implementation approach (e.g., "Should password reset use email link or OTP?"). This ensures the story is specific enough.
 
+### Phase 3b: User Type Coverage Check
+After clarification and before drafting AC, check the product context's "User Types" field. If the product has multiple user types (e.g., "Admin, Member, Guest"), ask the user:
+- "Your product has these user types: [list]. Does this story need to cover all of them, or just specific ones?"
+- If some user types need different behavior, suggest splitting AC categories by user type or creating separate stories.
+- If the user confirms only one user type is relevant, proceed. If multiple are relevant, ensure the AC covers each type's perspective.
+- Do NOT skip this step when multiple user types exist. It's critical for completeness.
+
 ### Phase 4: Drafting
 Fill in the remaining story fields based on the user's answers. Update the storyDraft incrementally with each response.
 
