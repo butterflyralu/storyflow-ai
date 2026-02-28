@@ -7,327 +7,260 @@ import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, ArrowLeft, SkipForward, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type StepType = 'text' | 'textarea' | 'tiles';
-
-interface WizardStepDef {
-  key: string;
-  label: string;
-  helper: string;
-  placeholder?: string;
-  defaultValue?: string;
-  type: StepType;
-  options?: { value: string; label: string; desc: string }[];
-  validatable?: boolean; // whether to run API validation
+function TileSelect<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { value: T; label: string; desc: string }[];
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            'flex-1 min-w-[100px] rounded-lg border-2 p-3 text-left transition-all',
+            value === opt.value
+              ? 'border-primary bg-primary/5'
+              : 'border-border hover:border-muted-foreground/30',
+          )}
+        >
+          <div className="text-sm font-semibold text-foreground">{opt.label}</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">{opt.desc}</div>
+        </button>
+      ))}
+    </div>
+  );
 }
 
-const STEPS: WizardStepDef[] = [
-  {
-    key: 'productName',
-    label: 'Product Name',
-    helper: 'What is your product called?',
-    placeholder: 'e.g., Acme Invoicing',
-    type: 'text',
-  },
-  {
-    key: 'industry',
-    label: 'Industry',
-    helper: 'What industry does your product serve?',
-    placeholder: 'e.g., FinTech, Healthcare, E-commerce, Education',
-    type: 'text',
-  },
-  {
-    key: 'productType',
-    label: 'Product Type',
-    helper: 'Who is your product built for?',
-    type: 'tiles',
-    options: [
-      { value: 'b2b', label: 'B2B', desc: 'Business-to-Business' },
-      { value: 'b2c', label: 'B2C', desc: 'Business-to-Consumer' },
-      { value: 'enterprise', label: 'Enterprise', desc: 'Large organizations' },
-      { value: 'internal', label: 'Internal', desc: 'Internal tooling' },
-    ],
-  },
-  {
-    key: 'platform',
-    label: 'Platform',
-    helper: 'What platform does your product run on?',
-    type: 'tiles',
-    options: [
-      { value: 'web', label: 'Web', desc: 'Browser-based application' },
-      { value: 'mobile', label: 'Mobile', desc: 'iOS and/or Android' },
-      { value: 'both', label: 'Both', desc: 'Web and Mobile' },
-    ],
-  },
-  {
-    key: 'userTypes',
-    label: 'User Types',
-    helper: 'Who are the different types of users? List the key roles.',
-    placeholder: 'e.g., Admin, Team Member, Guest, API Consumer',
-    type: 'textarea',
-  },
-  {
-    key: 'productDescription',
-    label: 'Product Description',
-    helper: 'Briefly describe what your product does and the problem it solves.',
-    placeholder: 'e.g., A platform that helps small businesses send and track invoices with automated reminders.',
-    type: 'textarea',
-  },
-  {
-    key: 'mission',
-    label: 'Product Mission',
-    helper: 'What is the core purpose of your product? What problem does it solve?',
-    placeholder: 'e.g., Help small businesses manage invoices effortlessly',
-    defaultValue: 'Help users accomplish their goals faster and with less friction',
-    type: 'textarea',
-    validatable: true,
-  },
-  {
-    key: 'northStar',
-    label: 'North Star Metric',
-    helper: 'What single metric best captures the value your product delivers?',
-    placeholder: 'e.g., Weekly active invoices sent',
-    defaultValue: 'Weekly active users completing core workflows',
-    type: 'textarea',
-    validatable: true,
-  },
-  {
-    key: 'persona',
-    label: 'Target Persona',
-    helper: 'Describe your primary user — their role, goals, and pain points.',
-    placeholder: 'e.g., Small business owner, 30-50, non-technical, time-constrained',
-    defaultValue: 'A busy professional who values speed and simplicity',
-    type: 'textarea',
-    validatable: true,
-  },
-  {
-    key: 'strategy',
-    label: 'Product Strategy',
-    helper: "How does your product win? What's the competitive approach?",
-    placeholder: 'e.g., Simplicity-first: fewer features, better UX than competitors',
-    defaultValue: 'Deliver a delightful, simple experience that reduces cognitive load',
-    type: 'textarea',
-    validatable: true,
-  },
-  {
-    key: 'objectives',
-    label: 'Current Objectives',
-    helper: 'What are you focused on this quarter or sprint?',
-    placeholder: 'e.g., Launch self-serve onboarding, reduce churn by 15%',
-    defaultValue: 'Improve core user experience and increase engagement',
-    type: 'textarea',
-    validatable: true,
-  },
-  {
-    key: 'acFormat',
-    label: 'Acceptance Criteria Format',
-    helper: 'How should acceptance criteria be written in your stories?',
-    type: 'tiles',
-    options: [
-      { value: 'plain', label: 'Plain Text', desc: 'Simple bullet-point criteria' },
-      { value: 'gherkin', label: 'Gherkin', desc: 'Given / When / Then format' },
-    ],
-  },
+function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium text-foreground">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+const SCREEN_TITLES = [
+  { title: 'Product Basics', subtitle: 'Tell us about your product so we can tailor story drafting to your context.' },
+  { title: 'Users & Product', subtitle: 'Help us understand who uses your product and what it does.' },
+  { title: 'Strategy & Preferences', subtitle: 'Define your goals and how you like your stories structured.' },
 ];
 
-const CONTEXT_FIELD_KEYS = ['mission', 'northStar', 'persona', 'strategy', 'objectives'];
-
 export function ContextWizard() {
-  const TOTAL_STEPS = STEPS.length;
+  const TOTAL_SCREENS = 3;
   const { setProductContext, setContextId, setStep } = useWizard();
-  const [stepIndex, setStepIndex] = useState(0);
+  const [screen, setScreen] = useState(0);
   const [values, setValues] = useState<ProductContextInput>({ ...EMPTY_CONTEXT });
-  const [validating, setValidating] = useState(false);
-  const [validationMsg, setValidationMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const step = STEPS[stepIndex];
-  const isLast = stepIndex === TOTAL_STEPS - 1;
-  const currentValue = (values as any)[step.key] || '';
+  const set = <K extends keyof ProductContextInput>(key: K, val: ProductContextInput[K]) =>
+    setValues(prev => ({ ...prev, [key]: val }));
 
-  const goNext = () => {
-    setStepIndex(i => i + 1);
-    setValidationMsg(null);
-  };
-
-  const goBack = () => {
-    if (stepIndex > 0) {
-      setStepIndex(i => i - 1);
-      setValidationMsg(null);
+  const canProceed = () => {
+    switch (screen) {
+      case 0:
+        return values.productName.trim() && values.industry.trim();
+      case 1:
+        return values.userTypes.trim() && values.productDescription.trim();
+      case 2:
+        return values.mission.trim() && values.northStar.trim() && values.persona.trim() && values.strategy.trim() && values.objectives.trim();
+      default:
+        return false;
     }
   };
 
-  const validateAndNext = async (valueToUse: string) => {
-    const updatedValues = { ...values, [step.key]: valueToUse };
-    setValues(updatedValues);
-
-    // Only run API validation on context fields
-    if (step.validatable && CONTEXT_FIELD_KEYS.includes(step.key)) {
-      setValidating(true);
-      setValidationMsg(null);
-      try {
-        const result = await api.validateContext({
-          field: step.key as any,
-          value: valueToUse,
-          allContext: updatedValues,
-        });
-        if (!result.pass) {
-          setValidationMsg(result.reason);
-          setValidating(false);
-          return;
-        }
-      } catch {
-        // Continue on validation error
-      }
-      setValidating(false);
-    }
-
-    if (isLast) {
-      finalize(updatedValues);
-    } else {
-      goNext();
-    }
-  };
-
-  const finalize = async (finalValues: ProductContextInput) => {
+  const finalize = async () => {
     setSaving(true);
     try {
-      const { contextId } = await api.saveContext(finalValues);
+      const { contextId } = await api.saveContext(values);
       setContextId(contextId);
     } catch {
       // continue even if save fails
     }
     setSaving(false);
-    setProductContext(finalValues);
+    setProductContext(values);
     setStep(2);
   };
 
   const handleNext = () => {
-    if (step.type === 'tiles') {
-      if (isLast) {
-        finalize(values);
-      } else {
-        goNext();
-      }
+    if (screen < TOTAL_SCREENS - 1) {
+      setScreen(s => s + 1);
     } else {
-      validateAndNext(currentValue);
+      finalize();
     }
   };
 
-  const handleSkip = () => {
-    if (step.defaultValue) {
-      validateAndNext(step.defaultValue);
-    } else {
-      // For non-validatable fields, just move on
-      if (isLast) {
-        finalize(values);
-      } else {
-        goNext();
-      }
-    }
+  const handleBack = () => {
+    if (screen > 0) setScreen(s => s - 1);
   };
 
-  const busy = validating || saving;
-
-  const canProceed = () => {
-    if (step.type === 'tiles') return true;
-    return currentValue.trim().length > 0;
-  };
+  const isLast = screen === TOTAL_SCREENS - 1;
+  const info = SCREEN_TITLES[screen];
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
       <div className="mb-6 text-sm font-medium text-muted-foreground">
-        {stepIndex + 1} of {TOTAL_STEPS}
+        Step {screen + 1} of {TOTAL_SCREENS}
       </div>
 
       <Card className="w-full max-w-xl border-0 shadow-lg">
         <CardContent className="p-8">
-          <h2 className="mb-2 text-2xl font-semibold tracking-tight text-foreground">
-            {step.label}
-          </h2>
-          <p className="mb-6 text-sm text-muted-foreground">{step.helper}</p>
+          <h2 className="mb-1 text-2xl font-semibold tracking-tight text-foreground">{info.title}</h2>
+          <p className="mb-6 text-sm text-muted-foreground">{info.subtitle}</p>
 
-          {step.type === 'tiles' && step.options && (
-            <div className="flex flex-wrap gap-3">
-              {step.options.map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setValues(prev => ({ ...prev, [step.key]: opt.value } as any))}
-                  className={cn(
-                    'flex-1 min-w-[120px] rounded-lg border-2 p-4 text-left transition-all',
-                    currentValue === opt.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-muted-foreground/30',
-                  )}
-                >
-                  <div className="text-sm font-semibold text-foreground">{opt.label}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{opt.desc}</div>
-                </button>
-              ))}
+          {screen === 0 && (
+            <div className="space-y-5">
+              <FieldGroup label="Product Name">
+                <Input
+                  value={values.productName}
+                  onChange={e => set('productName', e.target.value)}
+                  placeholder="e.g., Acme Invoicing"
+                  autoFocus
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Industry">
+                <Input
+                  value={values.industry}
+                  onChange={e => set('industry', e.target.value)}
+                  placeholder="e.g., FinTech, Healthcare, E-commerce"
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Product Type">
+                <TileSelect<ProductType>
+                  value={values.productType}
+                  onChange={v => set('productType', v)}
+                  options={[
+                    { value: 'b2b', label: 'B2B', desc: 'Business-to-Business' },
+                    { value: 'b2c', label: 'B2C', desc: 'Business-to-Consumer' },
+                    { value: 'enterprise', label: 'Enterprise', desc: 'Large organizations' },
+                    { value: 'internal', label: 'Internal', desc: 'Internal tooling' },
+                  ]}
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Platform">
+                <TileSelect<Platform>
+                  value={values.platform}
+                  onChange={v => set('platform', v)}
+                  options={[
+                    { value: 'web', label: 'Web', desc: 'Browser-based' },
+                    { value: 'mobile', label: 'Mobile', desc: 'iOS / Android' },
+                    { value: 'both', label: 'Both', desc: 'Web + Mobile' },
+                  ]}
+                />
+              </FieldGroup>
             </div>
           )}
 
-          {step.type === 'text' && (
-            <Input
-              value={currentValue}
-              onChange={e => {
-                setValues(prev => ({ ...prev, [step.key]: e.target.value } as any));
-                setValidationMsg(null);
-              }}
-              placeholder={step.placeholder}
-              className="text-base"
-              autoFocus
-              onKeyDown={e => e.key === 'Enter' && canProceed() && !busy && handleNext()}
-            />
-          )}
+          {screen === 1 && (
+            <div className="space-y-5">
+              <FieldGroup label="User Types">
+                <Textarea
+                  value={values.userTypes}
+                  onChange={e => set('userTypes', e.target.value)}
+                  placeholder="e.g., Admin, Team Member, Guest, API Consumer"
+                  className="min-h-[80px] resize-none"
+                  autoFocus
+                />
+              </FieldGroup>
 
-          {step.type === 'textarea' && (
-            <Textarea
-              value={currentValue}
-              onChange={e => {
-                setValues(prev => ({ ...prev, [step.key]: e.target.value } as any));
-                setValidationMsg(null);
-              }}
-              placeholder={step.placeholder}
-              className="min-h-[100px] resize-none text-base"
-              autoFocus
-            />
-          )}
+              <FieldGroup label="Product Description">
+                <Textarea
+                  value={values.productDescription}
+                  onChange={e => set('productDescription', e.target.value)}
+                  placeholder="Briefly describe what your product does and the problem it solves."
+                  className="min-h-[80px] resize-none"
+                />
+              </FieldGroup>
 
-          {validationMsg && (
-            <div className="mt-2 flex items-center gap-1.5 text-sm text-destructive">
-              <AlertCircle className="h-3.5 w-3.5" />
-              {validationMsg}
+              <FieldGroup label="Target Persona">
+                <Textarea
+                  value={values.persona}
+                  onChange={e => set('persona', e.target.value)}
+                  placeholder="e.g., Small business owner, 30-50, non-technical, time-constrained"
+                  className="min-h-[70px] resize-none"
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Product Mission">
+                <Textarea
+                  value={values.mission}
+                  onChange={e => set('mission', e.target.value)}
+                  placeholder="e.g., Help small businesses manage invoices effortlessly"
+                  className="min-h-[70px] resize-none"
+                />
+              </FieldGroup>
             </div>
           )}
 
-          <div className="mt-6 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {stepIndex > 0 && (
-                <Button variant="ghost" size="sm" onClick={goBack} disabled={busy} className="text-muted-foreground">
+          {screen === 2 && (
+            <div className="space-y-5">
+              <FieldGroup label="North Star Metric">
+                <Input
+                  value={values.northStar}
+                  onChange={e => set('northStar', e.target.value)}
+                  placeholder="e.g., Weekly active invoices sent"
+                  autoFocus
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Product Strategy">
+                <Textarea
+                  value={values.strategy}
+                  onChange={e => set('strategy', e.target.value)}
+                  placeholder="e.g., Simplicity-first: fewer features, better UX than competitors"
+                  className="min-h-[70px] resize-none"
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Current Objectives">
+                <Textarea
+                  value={values.objectives}
+                  onChange={e => set('objectives', e.target.value)}
+                  placeholder="e.g., Launch self-serve onboarding, reduce churn by 15%"
+                  className="min-h-[70px] resize-none"
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Acceptance Criteria Format">
+                <TileSelect<'plain' | 'gherkin'>
+                  value={values.acFormat}
+                  onChange={v => set('acFormat', v)}
+                  options={[
+                    { value: 'plain', label: 'Plain Text', desc: 'Simple bullet-point criteria' },
+                    { value: 'gherkin', label: 'Gherkin', desc: 'Given / When / Then format' },
+                  ]}
+                />
+              </FieldGroup>
+            </div>
+          )}
+
+          <div className="mt-8 flex items-center justify-between">
+            <div>
+              {screen > 0 && (
+                <Button variant="ghost" size="sm" onClick={handleBack} className="text-muted-foreground">
                   <ArrowLeft className="mr-1 h-4 w-4" />
                   Back
                 </Button>
               )}
-              {step.defaultValue && (
-                <Button variant="ghost" size="sm" onClick={handleSkip} disabled={busy} className="text-muted-foreground">
-                  <SkipForward className="mr-1 h-4 w-4" />
-                  Skip
-                </Button>
-              )}
-              {!step.defaultValue && step.type !== 'tiles' && (
-                <Button variant="ghost" size="sm" onClick={handleSkip} disabled={busy} className="text-muted-foreground">
-                  <SkipForward className="mr-1 h-4 w-4" />
-                  Skip
-                </Button>
-              )}
             </div>
-            <Button onClick={handleNext} disabled={!canProceed() || busy}
-              className={cn('transition-all duration-200', canProceed() && !busy && 'shadow-md')}>
-              {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <ArrowRight className="ml-1 h-4 w-4" />}
+            <Button onClick={handleNext} disabled={!canProceed() || saving}
+              className={cn('transition-all duration-200', canProceed() && !saving && 'shadow-md')}>
+              {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <ArrowRight className="ml-1 h-4 w-4" />}
               {saving ? 'Saving...' : isLast ? 'Start Drafting' : 'Next'}
             </Button>
           </div>
@@ -335,13 +268,13 @@ export function ContextWizard() {
       </Card>
 
       {/* Progress dots */}
-      <div className="mt-8 flex gap-1.5">
-        {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+      <div className="mt-8 flex gap-2">
+        {Array.from({ length: TOTAL_SCREENS }, (_, i) => (
           <div
             key={i}
             className={cn(
               'h-1.5 rounded-full transition-all duration-300',
-              i < stepIndex ? 'w-1.5 bg-primary' : i === stepIndex ? 'w-5 bg-primary' : 'w-1.5 bg-border',
+              i < screen ? 'w-1.5 bg-primary' : i === screen ? 'w-6 bg-primary' : 'w-1.5 bg-border',
             )}
           />
         ))}
