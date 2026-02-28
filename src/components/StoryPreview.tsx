@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -83,36 +83,31 @@ function EditableField({
   improvedStory?: StoryDraft;
   onApplyField?: (field: StoryField) => void;
 }) {
-  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
-  const save = () => { onSave(draft); setEditing(false); };
-  const cancel = () => { setDraft(value); setEditing(false); };
+
+  // Sync draft when value changes externally (e.g. Apply suggestion)
+  const lastExternal = useRef(value);
+  if (value !== lastExternal.current) {
+    lastExternal.current = value;
+    setDraft(value);
+  }
+
+  const save = () => { if (draft !== value) onSave(draft); };
 
   return (
     <div className="group relative rounded-lg border border-transparent p-3 transition-colors hover:border-border hover:bg-muted/30">
       <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
-      {editing ? (
-        <div className="flex gap-2">
-          {multiline ? (
-            <textarea value={draft} onChange={e => setDraft(e.target.value)}
-              className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring" rows={3} autoFocus />
-          ) : (
-            <input value={draft} onChange={e => setDraft(e.target.value)}
-              className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring" autoFocus />
-          )}
-          <div className="flex flex-col gap-1">
-            <button onClick={save} className="rounded p-1 text-primary hover:bg-primary/10"><Check className="h-3.5 w-3.5" /></button>
-            <button onClick={cancel} className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-start justify-between">
-          <p className={cn('text-sm text-foreground', !value && 'italic text-muted-foreground')}>{value || 'Not yet defined...'}</p>
-          <button onClick={() => { setDraft(value); setEditing(true); }} className="ml-2 opacity-0 transition-opacity group-hover:opacity-100">
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </div>
-      )}
+      <div>
+        {multiline ? (
+          <textarea value={draft} onChange={e => setDraft(e.target.value)} onBlur={save}
+            className="w-full rounded border-0 bg-transparent px-0 py-0 text-sm text-foreground focus:outline-none focus:ring-0 resize-none placeholder:text-muted-foreground placeholder:italic"
+            rows={3} placeholder="Not yet defined..." />
+        ) : (
+          <input value={draft} onChange={e => setDraft(e.target.value)} onBlur={save}
+            className="w-full rounded border-0 bg-transparent px-0 py-0 text-sm text-foreground focus:outline-none focus:ring-0 placeholder:text-muted-foreground placeholder:italic"
+            placeholder="Not yet defined..." />
+        )}
+      </div>
       {annotations?.map((a, i) => (
         <InlineAnnotation key={i} item={a} improvedStory={improvedStory}
           onApply={onApplyField ? () => onApplyField(mapCriterionToField(a.criterion)) : undefined} />
