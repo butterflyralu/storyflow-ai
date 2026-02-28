@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { mockAIChat, getInitialGreeting } from '@/services/mockApi';
-import { ChatMessage } from '@/types/wizard';
+import { ChatMessage, StoryDraft } from '@/types/wizard';
 import { OptionTiles } from '@/components/OptionTiles';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ export function ChatPanel() {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
+  const storyRef = useRef<StoryDraft>(story);
+  storyRef.current = story;
 
   useEffect(() => {
     if (!initialized.current && chatHistory.length === 0) {
@@ -36,12 +38,14 @@ export function ChatPanel() {
     setLoading(true);
 
     try {
-      const response = await mockAIChat(text, story);
+      // Use ref to get the latest story state (includes storyUpdates from previous messages)
+      const currentStory = storyRef.current;
+      const response = await mockAIChat(text, currentStory);
       addMessage(response);
     } finally {
       setLoading(false);
     }
-  }, [loading, story, addMessage]);
+  }, [loading, addMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

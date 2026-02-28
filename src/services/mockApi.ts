@@ -25,7 +25,7 @@ const CONVERSATION_FLOWS: Array<{
   respond: (msg: string, story: StoryDraft) => { content: string; storyUpdate?: Partial<StoryDraft>; options?: OptionTile[] };
 }> = [
   {
-    trigger: (_, story) => !story.asA,
+    trigger: (_, story) => !story.description,
     respond: (msg) => ({
       content: `Got it! Let me shape that into a story. First, who is the primary user for this feature?`,
       storyUpdate: { description: msg },
@@ -37,7 +37,7 @@ const CONVERSATION_FLOWS: Array<{
     }),
   },
   {
-    trigger: (_, story) => !story.iWant,
+    trigger: (_, story) => !story.asA,
     respond: (msg, story) => ({
       content: `Perfect — "As ${msg}". Now, what specific capability do they need? What should they be able to do?`,
       storyUpdate: { asA: msg },
@@ -47,7 +47,7 @@ const CONVERSATION_FLOWS: Array<{
     }),
   },
   {
-    trigger: (_, story) => !story.soThat,
+    trigger: (_, story) => !story.iWant,
     respond: (msg) => ({
       content: `Nice — "I want to ${msg}". What's the value? Why does this matter to the user?`,
       storyUpdate: { iWant: msg },
@@ -59,7 +59,7 @@ const CONVERSATION_FLOWS: Array<{
     }),
   },
   {
-    trigger: (_, story) => story.acceptanceCriteria.length === 0,
+    trigger: (_, story) => !story.soThat,
     respond: (msg) => ({
       content: `Great — "So that ${msg}". Now let me suggest some acceptance criteria. Do these look right?\n\n1. ✅ Given a valid input, the system should respond within 2 seconds\n2. ✅ Error states are handled with clear user messaging\n3. ✅ The feature is accessible via keyboard navigation\n\nWant to add, remove, or modify any?`,
       storyUpdate: {
