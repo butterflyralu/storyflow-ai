@@ -14,6 +14,8 @@ export function ChatPanel() {
     chatHistory, addMessage, story, updateStory,
     productContext, contextId, sessionId,
     setEvaluation, setStep, saveStory, resetStory,
+    pendingSplitStories, confirmSplitStories, clearPendingSplit,
+    setEpicSummary, setSplitStories,
   } = useWizard();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -75,8 +77,12 @@ export function ChatPanel() {
 
       const currentStory = storyRef.current;
 
+      const pendingSplitContext = pendingSplitStories.length > 0
+        ? `\n\nPending Split Stories (user is deciding which to keep):\n${pendingSplitStories.map((s, i) => `${i + 1}. ${s.title} — ${s.description}`).join('\n')}`
+        : '';
+
       const response = await api.storyAgent({
-        message: text,
+        message: text + pendingSplitContext,
         sessionId,
         contextId: contextId || '',
         agentContext: {
@@ -106,6 +112,12 @@ export function ChatPanel() {
       });
 
       updateStory(response.storyDraft);
+
+      // Handle split confirmation
+      if (response.confirmSplit && response.confirmSplit.length > 0 && pendingSplitStories.length > 0) {
+        const indices = response.confirmSplit.map(i => i - 1); // Convert 1-based to 0-based
+        confirmSplitStories(indices);
+      }
 
       const aiMsg: UIChatMessage = {
         id: String(Date.now() + 1),

@@ -157,7 +157,7 @@ function EditableInline({ value, onSave, placeholder }: { value: string; onSave:
 }
 
 export function StoryPreview() {
-  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setSplitStories, setEpicSummary } = useWizard();
+  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setPendingSplitStories, setEpicSummary } = useWizard();
   const [saving, setSaving] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [appliedFields, setAppliedFields] = useState<Set<StoryField>>(new Set());
@@ -370,13 +370,13 @@ export function StoryPreview() {
                       objectives: productContext.objectives,
                     },
                   });
-                  setSplitStories(result.stories);
+                  setPendingSplitStories(result.stories);
                   setEpicSummary(result.epicSummary);
                   addMessage({
                     id: String(Date.now()),
                     role: 'assistant',
-                    content: `I've split the epic into **${result.stories.length} stories**:\n\n${result.stories.map((s, i) => `${i + 1}. **${s.title}** — ${s.description}`).join('\n')}\n\nSwipe through the cards on the right to review and edit each one. You can discuss any story here.`,
-                    options: [{ label: 'Save all stories' }, { label: 'Discard split' }],
+                    content: `I've proposed **${result.stories.length} stories** from this epic:\n\n${result.stories.map((s, i) => `${i + 1}. **${s.title}** — ${s.description}`).join('\n')}\n\nWhich stories would you like to keep? You can say things like "keep all", "drop stories 2 and 4", or "only keep 1, 3, 5".`,
+                    options: [{ label: 'Keep all' }, { label: 'Let me choose' }],
                   });
                   toast({ title: '✂️ Epic split!', description: `${result.stories.length} stories generated.` });
                 } catch (e) {

@@ -79,7 +79,19 @@ Once acceptance criteria exist, ask the user to confirm them before evaluation:
 3. Never auto-fill soThat: The business value MUST come from the user. This is non-negotiable.
 4. Acceptance criteria format: Group AC into categories (e.g., "Happy path", "Error handling", "Security"). The format depends on the user's preference — see the AC Format instruction below.
 5. Stay conversational: Keep messages concise and action-oriented. Summarize what you did, then ask what's next.
-6. One thing at a time: Don't dump all fields at once. Progress naturally through the conversation.`;
+6. One thing at a time: Don't dump all fields at once. Progress naturally through the conversation.
+
+## Split Story Discussion
+
+When the user's message contains "Pending Split Stories", they are deciding which proposed stories to keep from an epic split. Help them:
+
+1. Understand commands like "keep all", "keep 1, 3, 5", "drop story 2", "drop stories 2 and 4", "only keep 3 of these", "merge 1 and 3"
+2. When the user confirms their selection (e.g., "keep all", "keep 1, 3", "looks good", "yes"), return the confirmSplit field with the 1-based indices of the stories to keep
+3. For "keep all", return all indices (e.g., [1, 2, 3, 4, 5] for 5 stories)
+4. For "drop story 2" from 5 stories, return [1, 3, 4, 5]
+5. For merging requests, explain that you can't merge stories automatically but suggest they keep the most relevant ones
+6. Always confirm what you understood before returning confirmSplit
+7. Do NOT modify the storyDraft during split discussion — keep it unchanged`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -190,6 +202,11 @@ serve(async (req) => {
                 "metadata",
               ],
               additionalProperties: false,
+            },
+            confirmSplit: {
+              type: "array",
+              items: { type: "number" },
+              description: "1-based indices of pending split stories the user confirmed to keep. Only set when the user has confirmed their selection from pending split stories.",
             },
           },
           required: ["message", "options", "awaitingCriteriaConfirmation", "storyDraft"],
