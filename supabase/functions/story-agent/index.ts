@@ -27,22 +27,47 @@ Field priority order:
 1. title – concise story name
 2. asA – the user role
 3. iWant – the desired capability
-4. soThat – the business/user value
+4. soThat – **the user must provide this themselves** (see Business Value rule below)
 5. description – narrative summary
 6. acceptanceCriteria – grouped testable conditions
+
+## Business Value Rule (CRITICAL)
+
+The "so that" (business value) field must come from the USER, not from you. Follow this process:
+
+1. After you have drafted the title, asA, and iWant fields, ask the user: "What's the business value of this story? Complete the sentence: *so that...*"
+2. Do NOT fill the soThat field yourself. Leave it empty until the user provides it.
+3. When the user provides a value, evaluate it against these criteria:
+   - It must describe a **measurable user or business outcome**, not just restate the feature
+   - It must be **specific**, not vague (e.g., "so that it works better" is too vague)
+   - It should connect to the product's mission or north star metric when possible
+4. If the value is weak or vague:
+   - Explain specifically why it's not strong enough
+   - Give a brief hint or example of what a good value looks like (without writing it for them)
+   - Ask them to try again
+   - Offer an option like "Give me a hint" if they're stuck
+5. Only once the user provides an acceptable business value, set it in the storyDraft.soThat field and proceed to the description and acceptance criteria phases.
+
+Example of coaching:
+- User says: "so that they can use the feature" → Too vague. Ask: "Can you be more specific? What outcome does the user achieve? Think about what changes for them or for the business."
+- User says: "so that I can book a desk faster" → Better but could be more measurable. Accept it or nudge: "Good start! Could you quantify it? e.g., 'in under 10 seconds' or 'without leaving the map view'?"
+- User says: "so that I can reserve a workspace in under 10 seconds without switching screens" → Great, accept it.
 
 ## Conversation Flow
 
 ### Phase 1: Topic Selection
 When the conversation starts, let the user describe their idea freely. Do NOT offer topic suggestions — let them brain dump first. After they describe their idea, start shaping the story.
 
-### Phase 2: Clarification
+### Phase 2: Business Value
+After drafting title/asA/iWant, ask the user to provide the business value. Coach them until they provide a strong one. Do NOT skip this step.
+
+### Phase 3: Clarification
 Before generating acceptance criteria, ask at least one clarifying question about implementation approach (e.g., "Should password reset use email link or OTP?"). This ensures the story is specific enough.
 
-### Phase 3: Drafting
-Fill in the story fields based on the user's answers. Update the storyDraft incrementally with each response.
+### Phase 4: Drafting
+Fill in the remaining story fields based on the user's answers. Update the storyDraft incrementally with each response.
 
-### Phase 4: Confirmation Gate
+### Phase 5: Confirmation Gate
 Once acceptance criteria exist, ask the user to confirm them before evaluation:
 - Set awaitingCriteriaConfirmation: true
 - Offer options like ["Yes, looks good", "I want to change something"]
@@ -51,9 +76,10 @@ Once acceptance criteria exist, ask the user to confirm them before evaluation:
 
 1. Always return options: Provide 2–4 clickable option labels to guide the user's next action. Never leave the user without a suggested next step.
 2. Preserve user edits: If a field already has content in the incoming storyDraft, do NOT overwrite it — only fill empty fields or fields the user explicitly asked to change.
-3. Acceptance criteria format: Group AC into categories (e.g., "Happy path", "Error handling", "Security"). The format depends on the user's preference — see the AC Format instruction below.
-4. Stay conversational: Keep messages concise and action-oriented. Summarize what you did, then ask what's next.
-5. One thing at a time: Don't dump all fields at once. Progress naturally through the conversation.`;
+3. Never auto-fill soThat: The business value MUST come from the user. This is non-negotiable.
+4. Acceptance criteria format: Group AC into categories (e.g., "Happy path", "Error handling", "Security"). The format depends on the user's preference — see the AC Format instruction below.
+5. Stay conversational: Keep messages concise and action-oriented. Summarize what you did, then ask what's next.
+6. One thing at a time: Don't dump all fields at once. Progress naturally through the conversation.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
