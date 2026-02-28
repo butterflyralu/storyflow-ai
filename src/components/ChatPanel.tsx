@@ -121,7 +121,7 @@ export function ChatPanel() {
         id: String(Date.now() + 1),
         role: 'assistant',
         content: response.message,
-        options: response.awaitingCriteriaConfirmation ? undefined : response.options,
+        options: response.options,
       };
       addMessage(aiMsg);
 
