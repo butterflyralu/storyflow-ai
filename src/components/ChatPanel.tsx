@@ -29,21 +29,7 @@ export function ChatPanel() {
       const greeting: UIChatMessage = {
         id: String(Date.now()),
         role: 'assistant',
-        content: [
-          `Great, I have your product context! Here's what I understand:`,
-          '',
-          `**Mission:** ${productContext.mission || 'Not set'}`,
-          `**North Star:** ${productContext.northStar || 'Not set'}`,
-          `**Persona:** ${productContext.persona || 'Not set'}`,
-          '',
-          `What user story would you like to draft?`,
-        ].join('\n'),
-        options: [
-          { label: '🔐 Authentication story' },
-          { label: '📊 Dashboard feature' },
-          { label: '🔔 Notifications' },
-          { label: '✏️ Something else' },
-        ],
+        content: 'What user story would you like to draft? Just describe what you have in mind — I\'ll help shape it.',
       };
       addMessage(greeting);
     }
