@@ -201,7 +201,10 @@ export function StoryPreview() {
     setDismissedCriteria(prev => new Set(prev).add(criterion));
   };
 
-  const hasFailures = evaluation && evaluation.scorecard.some(i => i.result === 'FAIL');
+  const remainingFailures = evaluation
+    ? evaluation.scorecard.filter(i => i.result === 'FAIL' && !appliedFields.has(mapCriterionToField(i.criterion)) && !dismissedCriteria.has(i.criterion))
+    : [];
+  const hasRemainingFailures = remainingFailures.length > 0;
 
   const applyField = (field: StoryField) => {
     if (!improved) return;
@@ -392,19 +395,21 @@ export function StoryPreview() {
         {/* Action bar when evaluation present */}
         {evaluation && (
           <div className="flex gap-2 border-t border-border pt-3 mt-2">
-            <Button size="sm" onClick={() => {
-              setStory(evaluation.improvedStory);
-              setEvaluation(null);
-              addMessage({
-                id: String(Date.now()),
-                role: 'assistant',
-                content: '✅ Story updated with improvements! You can save it or keep refining. Want to start a new story?',
-                options: [{ label: 'Save this story' }, { label: 'Start a new story' }, { label: 'Keep editing' }],
-              });
-            }} className="flex-1">
-              Accept All Improvements
-              {hasFailures && <Badge variant="secondary" className="ml-1.5 text-[10px]">{evaluation.scorecard.filter(i => i.result === 'FAIL').length} fixed</Badge>}
-            </Button>
+            {hasRemainingFailures && (
+              <Button size="sm" onClick={() => {
+                setStory(evaluation.improvedStory);
+                setEvaluation(null);
+                addMessage({
+                  id: String(Date.now()),
+                  role: 'assistant',
+                  content: '✅ Story updated with improvements! You can save it or keep refining. Want to start a new story?',
+                  options: [{ label: 'Save this story' }, { label: 'Start a new story' }, { label: 'Keep editing' }],
+                });
+              }} className="flex-1">
+                Accept All Improvements
+                <Badge variant="secondary" className="ml-1.5 text-[10px]">{remainingFailures.length} fixed</Badge>
+              </Button>
+            )}
             <Button size="sm" variant="secondary" onClick={() => {
               setEvaluation(null);
               addMessage({
