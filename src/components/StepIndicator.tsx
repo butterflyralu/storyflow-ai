@@ -5,8 +5,7 @@ import { Check } from 'lucide-react';
 const STEPS = [
   { num: 1, label: 'Context' },
   { num: 2, label: 'Draft' },
-  { num: 3, label: 'Evaluate' },
-  { num: 4, label: 'Finalize' },
+  { num: 3, label: 'Finalize' },
 ] as const;
 
 export function StepIndicator() {
@@ -22,7 +21,7 @@ export function StepIndicator() {
         return (
           <div key={s.num} className="flex items-center gap-2">
             <button
-              onClick={() => isComplete && setStep(s.num as 1 | 2 | 3 | 4)}
+              onClick={() => isComplete && setStep(s.num as 1 | 2 | 3)}
               disabled={isFuture}
               className={cn(
                 'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300',
