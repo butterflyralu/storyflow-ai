@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Pencil, Check, X, AlertTriangle, Save } from 'lucide-react';
+import { Pencil, Check, X, AlertTriangle, Save, Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 
@@ -152,6 +152,24 @@ export function StoryPreview() {
   const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory } = useWizard();
   const [saving, setSaving] = useState(false);
 
+  const formatForJira = () => {
+    const lines = [`Title: ${story.title}`, '', `As a ${story.asA}, I want to ${story.iWant}, so that ${story.soThat}`];
+    if (story.description) lines.push('', 'Description:', story.description);
+    if (story.acceptanceCriteria.length > 0) {
+      lines.push('', 'Acceptance Criteria:');
+      story.acceptanceCriteria.forEach(g => {
+        lines.push(`[${g.category}]`);
+        g.items.forEach(item => lines.push(`- ${item}`));
+      });
+    }
+    return lines.join('\n');
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(formatForJira());
+    toast({ title: '📋 Copied to clipboard!', description: 'Paste it into Jira.' });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     await new Promise(r => setTimeout(r, 500));
@@ -195,10 +213,16 @@ export function StoryPreview() {
             )}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
             {story.title && (
-              <Button size="sm" onClick={handleSave} disabled={saving} className="ml-1 h-8 gap-1.5 px-4 text-xs font-semibold shadow-sm">
-                <Save className="h-3.5 w-3.5" />
-                {saving ? 'Saving...' : 'Save Story'}
-              </Button>
+              <>
+                <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 gap-1.5 px-3 text-xs font-semibold">
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy for Jira
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 gap-1.5 px-4 text-xs font-semibold shadow-sm">
+                  <Save className="h-3.5 w-3.5" />
+                  {saving ? 'Saving...' : 'Save Story'}
+                </Button>
+              </>
             )}
           </div>
         </div>
