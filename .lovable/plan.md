@@ -1,64 +1,50 @@
 
 
-## Plan: Epic Splitting Feature with Swipeable Story Cards
+## Plan: Chat-First Epic Splitting Flow
 
-### UX Best Practices for Story Splitting
+### Problem
+Currently, clicking "Split Story" immediately generates cards in the right panel. The user has no chance to discuss, filter, or adjust which stories to keep before they appear. Chat commands like "only keep 3 of the 5" are ignored because the story agent doesn't know about split stories.
 
-- **Progressive disclosure**: Show the split suggestions in-context rather than navigating away. The chat explains the rationale while the right panel shows the resulting cards.
-- **Card carousel with visible neighbors**: Show partial edges of adjacent cards so users know there are more stories to swipe through. Use dots or a "2/5" counter for position awareness.
-- **Preserve epic context**: Keep the original epic summary visible as a sticky header above the cards, so users always see the parent context.
-- **One story at a time**: Let users focus on and edit one story card at a time (AC, title, etc.) before moving to the next — matches the "one thing at a time" principle.
-- **Non-destructive**: Keep the original epic story accessible via a "Back to original" action. Splitting should feel like a suggestion, not a forced action.
-- **Batch save vs. individual save**: Let users save all split stories at once or cherry-pick which ones to keep.
+### New Flow
+
+1. **Split button calls API** → results go to chat only (not to right panel yet)
+2. **Chat lists proposed stories** as a numbered list, asks user which to keep
+3. **User discusses** in chat (e.g., "drop stories 2 and 4", "merge 1 and 3")
+4. **Chat confirms final selection** → only then populates cards in right panel
+5. User swipes through confirmed cards, adds AC, etc.
 
 ### Implementation Steps
 
-1. **New edge function `supabase/functions/split-story/index.ts`**
-   - Receives the current epic story + product context
-   - System prompt instructs the AI to break the epic into 3-6 independent user stories, each with title/asA/iWant/soThat/description and empty AC
-   - Returns `{ epicSummary: string, stories: StoryDraft[] }`
+1. **Change split button behavior in `StoryPreview.tsx`**
+   - Instead of calling `setSplitStories()` immediately, store the API result temporarily in a new state `pendingSplitStories` in WizardContext
+   - Chat message lists proposed stories and asks which to keep
+   - Add options like "Keep all", "Let me choose"
 
-2. **Extend WizardContext state**
-   - Add `splitStories: StoryDraft[]` and `activeSplitIndex: number` state
-   - Add `epicSummary: string | null` to hold the parent epic context
-   - Actions: `setSplitStories`, `setActiveSplitIndex`, `updateSplitStory`, `clearSplit`
+2. **Add `pendingSplitStories` to `WizardContext.tsx`**
+   - New state: `pendingSplitStories: StoryDraft[]` — holds AI suggestions before user confirms
+   - New action: `confirmSplitStories(indices: number[])` — moves selected stories from pending to `splitStories` and shows cards
+   - New action: `clearPendingSplit()` — discards pending suggestions
 
-3. **Add "Split Story" button to StoryPreview**
-   - Appears conditionally when `evaluation?.isLikelyEpic` is true, next to the existing epic warning
-   - On click: calls the split-story edge function, then populates `splitStories` in context
+3. **Update `story-agent` system prompt** (`supabase/functions/story-agent/index.ts`)
+   - Add instructions: when `pendingSplitStories` is present in the draft context, the agent should help the user decide which stories to keep/drop/merge
+   - Agent can understand commands like "keep 1, 3, 5", "drop story 2", "merge stories 1 and 3"
+   - When user confirms selection, agent returns a `confirmSplit` flag with the selected indices
 
-4. **New `SplitStoriesView` component** (replaces StoryPreview when in split mode)
-   - **Sticky epic header**: Shows the original epic title and summary
-   - **Embla carousel** (already installed: `embla-carousel-react`) for swipeable story cards
-   - Each card is a mini version of StoryPreview (title, user story sentence, description, editable AC section)
-   - Navigation: dot indicators + prev/next buttons + "3 of 5" label
-   - Each card has inline-editable fields like the current StoryPreview
+4. **Update `ChatPanel.tsx`** to handle split confirmation
+   - When agent response includes `confirmSplit` with indices, call `confirmSplitStories(indices)` to move selected stories to the right panel
+   - Pass `pendingSplitStories` as additional context to the story agent API call
 
-5. **Chat integration**
-   - When split is triggered, send a chat message listing the suggested stories
-   - User can discuss individual stories in chat (e.g., "make story 2 more specific")
-   - The story agent receives the current split story as context
+5. **Update story-agent tool definition** (`supabase/functions/story-agent/index.ts`)
+   - Add `confirmSplit` (optional array of indices) to the `update_story` tool response schema
+   - When the agent decides the user has confirmed their selection, it returns the indices
 
-6. **Actions on split view**
-   - "Save All Stories" button to batch-save
-   - "Discard Split" to return to the original epic view
-   - Per-card "Remove" to drop a suggested story
+### File Changes
 
-7. **Update `src/services/api.ts`**
-   - Add `splitStory(input)` method calling the new edge function
-
-8. **Update `src/services/types.ts`**
-   - Add `SplitStoryRequest` and `SplitStoryResponse` types
-
-### File Changes Summary
-
-| File | Action |
+| File | Change |
 |------|--------|
-| `supabase/functions/split-story/index.ts` | Create |
-| `src/services/types.ts` | Add split types |
-| `src/services/api.ts` | Add `splitStory` method |
-| `src/context/WizardContext.tsx` | Add split state + actions |
-| `src/components/SplitStoriesView.tsx` | Create (carousel + cards) |
-| `src/components/StoryPreview.tsx` | Add "Split Story" button |
-| `src/components/Wizard.tsx` | Conditionally render SplitStoriesView |
+| `src/context/WizardContext.tsx` | Add `pendingSplitStories`, `confirmSplitStories`, `clearPendingSplit` |
+| `src/components/StoryPreview.tsx` | Split button stores to `pendingSplitStories` instead of `splitStories` |
+| `src/components/ChatPanel.tsx` | Pass `pendingSplitStories` to agent, handle `confirmSplit` response |
+| `supabase/functions/story-agent/index.ts` | Add split discussion instructions + `confirmSplit` field to tool schema |
+| `src/services/types.ts` | Add `confirmSplit` to `StoryAgentResponse` |
 
