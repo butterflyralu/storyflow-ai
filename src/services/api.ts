@@ -168,21 +168,27 @@ async function mockEvaluateStory(_input: EvaluateRequest): Promise<EvaluateRespo
     scorecard: [
       {
         framework: "INVEST",
+        criterion: "Valuable",
+        result: "FAIL",
+        explanation: "The 'so that' clause is vague — specify the measurable user outcome.",
+      },
+      {
+        framework: "INVEST",
         criterion: "Testable",
+        result: "FAIL",
+        explanation: "Acceptance criteria lack measurable pass/fail outcomes for token expiry.",
+      },
+      {
+        framework: "INVEST",
+        criterion: "Independent",
         result: "PASS",
-        explanation: "Acceptance criteria are measurable and concrete.",
+        explanation: "Story is self-contained and can be delivered without dependencies.",
       },
       {
         framework: "DoR",
-        criterion: "No blocking open questions",
-        result: "FAIL",
-        explanation: "Password policy and expiry window are not explicit.",
-      },
-      {
-        framework: "CustomerRules",
-        criterion: "Error-state clarity",
+        criterion: "Small",
         result: "PASS",
-        explanation: "Expired/invalid link behavior is defined.",
+        explanation: "Story scope fits within a single sprint.",
       },
     ],
     overallResult: "FAIL",
