@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useWizard } from '@/context/WizardContext';
-import { mockAIChat, getInitialGreeting } from '@/services/mockApi';
-import { ChatMessage, StoryDraft } from '@/types/wizard';
+import { api } from '@/services/api';
+import type { UIChatMessage } from '@/types/wizard';
+import { EMPTY_STORY } from '@/types/wizard';
 import { OptionTiles } from '@/components/OptionTiles';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -9,18 +10,40 @@ import { Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ChatPanel() {
-  const { chatHistory, addMessage, story, productContext } = useWizard();
+  const {
+    chatHistory, addMessage, story, updateStory,
+    productContext, contextId, sessionId,
+  } = useWizard();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
-  const storyRef = useRef<StoryDraft>(story);
+  const storyRef = useRef(story);
   storyRef.current = story;
 
+  // Initial greeting
   useEffect(() => {
     if (!initialized.current && chatHistory.length === 0) {
       initialized.current = true;
-      const greeting = getInitialGreeting(productContext);
+      const greeting: UIChatMessage = {
+        id: String(Date.now()),
+        role: 'assistant',
+        content: [
+          `Great, I have your product context! Here's what I understand:`,
+          '',
+          `**Mission:** ${productContext.mission || 'Not set'}`,
+          `**North Star:** ${productContext.northStar || 'Not set'}`,
+          `**Persona:** ${productContext.persona || 'Not set'}`,
+          '',
+          `What user story would you like to draft?`,
+        ].join('\n'),
+        options: [
+          { label: '🔐 Authentication story' },
+          { label: '📊 Dashboard feature' },
+          { label: '🔔 Notifications' },
+          { label: '✏️ Something else' },
+        ],
+      };
       addMessage(greeting);
     }
   }, []);
@@ -32,20 +55,57 @@ export function ChatPanel() {
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
 
-    const userMsg: ChatMessage = { id: String(Date.now()), role: 'user', content: text };
+    const userMsg: UIChatMessage = { id: String(Date.now()), role: 'user', content: text };
     addMessage(userMsg);
     setInput('');
     setLoading(true);
 
     try {
-      // Use ref to get the latest story state (includes storyUpdates from previous messages)
+      // Build chat history for the API
+      const history = [...chatHistory, userMsg].map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
       const currentStory = storyRef.current;
-      const response = await mockAIChat(text, currentStory, productContext);
-      addMessage(response);
+
+      const response = await api.storyAgent({
+        message: text,
+        sessionId,
+        contextId: contextId || '',
+        agentContext: {
+          mission: productContext.mission,
+          persona: productContext.persona,
+          strategy: productContext.strategy,
+          northStar: productContext.northStar,
+          objectives: productContext.objectives,
+        },
+        history,
+        storyDraft: {
+          title: currentStory.title || '',
+          asA: currentStory.asA || '',
+          iWant: currentStory.iWant || '',
+          soThat: currentStory.soThat || '',
+          description: currentStory.description || '',
+          acceptanceCriteria: currentStory.acceptanceCriteria || [],
+          metadata: currentStory.metadata || { project: '', epic: '', priority: '', estimate: '' },
+        },
+      });
+
+      // Update story draft from agent response
+      updateStory(response.storyDraft);
+
+      const aiMsg: UIChatMessage = {
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        content: response.message,
+        options: response.options,
+      };
+      addMessage(aiMsg);
     } finally {
       setLoading(false);
     }
-  }, [loading, addMessage]);
+  }, [loading, chatHistory, addMessage, updateStory, productContext, contextId, sessionId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
-import { ProductContext } from '@/types/wizard';
+import type { ContextField } from '@/services/types';
+import type { ProductContextInput } from '@/types/wizard';
+import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, SkipForward } from 'lucide-react';
+import { ArrowRight, SkipForward, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FIELDS: Array<{
-  key: keyof ProductContext;
+  key: ContextField;
   label: string;
   helper: string;
   placeholder: string;
@@ -52,39 +54,68 @@ const FIELDS: Array<{
 ];
 
 export function ContextWizard() {
-  const { setProductContext, setStep } = useWizard();
+  const { setProductContext, setContextId, setStep } = useWizard();
   const [fieldIndex, setFieldIndex] = useState(0);
-  const [values, setValues] = useState<ProductContext>({
+  const [values, setValues] = useState<ProductContextInput>({
     mission: '',
     northStar: '',
     persona: '',
     strategy: '',
     objectives: '',
   });
+  const [validating, setValidating] = useState(false);
+  const [validationMsg, setValidationMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const field = FIELDS[fieldIndex];
   const isLast = fieldIndex === FIELDS.length - 1;
   const currentValue = values[field.key];
 
-  const handleNext = () => {
+  const validateAndNext = async (valueToUse: string) => {
+    const updatedValues = { ...values, [field.key]: valueToUse };
+    setValues(updatedValues);
+
+    // Validate through the API
+    setValidating(true);
+    setValidationMsg(null);
+    try {
+      const result = await api.validateContext({
+        field: field.key,
+        value: valueToUse,
+        allContext: updatedValues,
+      });
+      if (!result.pass) {
+        setValidationMsg(result.reason);
+        setValidating(false);
+        return;
+      }
+    } catch {
+      // Continue on validation error (don't block the user)
+    }
+    setValidating(false);
+
     if (isLast) {
-      setProductContext(values);
+      setSaving(true);
+      try {
+        const { contextId } = await api.saveContext(updatedValues);
+        setContextId(contextId);
+      } catch {
+        // continue even if save fails in mock mode
+      }
+      setSaving(false);
+      setProductContext(updatedValues);
       setStep(2);
     } else {
       setFieldIndex(i => i + 1);
+      setValidationMsg(null);
     }
   };
 
-  const handleSkip = () => {
-    setValues(prev => ({ ...prev, [field.key]: field.defaultValue }));
-    if (isLast) {
-      const final = { ...values, [field.key]: field.defaultValue };
-      setProductContext(final);
-      setStep(2);
-    } else {
-      setFieldIndex(i => i + 1);
-    }
-  };
+  const handleNext = () => validateAndNext(currentValue);
+
+  const handleSkip = () => validateAndNext(field.defaultValue);
+
+  const busy = validating || saving;
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
@@ -101,17 +132,28 @@ export function ContextWizard() {
 
           <Textarea
             value={currentValue}
-            onChange={e => setValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+            onChange={e => {
+              setValues(prev => ({ ...prev, [field.key]: e.target.value }));
+              setValidationMsg(null);
+            }}
             placeholder={field.placeholder}
             className="min-h-[100px] resize-none text-base"
             autoFocus
           />
+
+          {validationMsg && (
+            <div className="mt-2 flex items-center gap-1.5 text-sm text-destructive">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {validationMsg}
+            </div>
+          )}
 
           <div className="mt-6 flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSkip}
+              disabled={busy}
               className="text-muted-foreground"
             >
               <SkipForward className="mr-1 h-4 w-4" />
@@ -120,14 +162,18 @@ export function ContextWizard() {
 
             <Button
               onClick={handleNext}
-              disabled={!currentValue.trim()}
+              disabled={!currentValue.trim() || busy}
               className={cn(
                 'transition-all duration-200',
-                currentValue.trim() && 'shadow-md',
+                currentValue.trim() && !busy && 'shadow-md',
               )}
             >
-              {isLast ? 'Start Drafting' : 'Next'}
-              <ArrowRight className="ml-1 h-4 w-4" />
+              {busy ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowRight className="ml-1 h-4 w-4" />
+              )}
+              {saving ? 'Saving...' : isLast ? 'Start Drafting' : 'Next'}
             </Button>
           </div>
         </CardContent>

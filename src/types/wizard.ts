@@ -1,62 +1,53 @@
-export interface ProductContext {
-  mission: string;
-  northStar: string;
-  persona: string;
-  strategy: string;
-  objectives: string;
-}
+/**
+ * Re-exports shared API types used across the wizard UI.
+ * UI-only extensions (e.g. WizardStep, UIChatMessage) live here.
+ */
+import type {
+  StoryDraft,
+  StoryAcceptanceCriteriaCategory,
+  StoryMetadata,
+  SaveContextRequest,
+  EvaluateResponse,
+} from '@/services/types';
 
-export interface StoryDraft {
-  asA: string;
-  iWant: string;
-  soThat: string;
-  description: string;
-  acceptanceCriteria: string[];
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  size: 'XS' | 'S' | 'M' | 'L' | 'XL';
-  tags: string[];
-}
+// Re-export shared types for convenience
+export type {
+  StoryDraft,
+  StoryAcceptanceCriteriaCategory,
+  StoryMetadata,
+  SaveContextRequest,
+  EvaluateResponse,
+};
 
-export interface ChatMessage {
+/** The wizard step numbers */
+export type WizardStep = 1 | 2 | 3 | 4;
+
+/**
+ * Product context used internally in the wizard (no contextId/lastUpdated
+ * until saved via the API).
+ */
+export type ProductContextInput = SaveContextRequest;
+
+/** Chat message with UI extras (id for keys, options for tiles). */
+export interface UIChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  options?: OptionTile[];
-  storyUpdate?: Partial<StoryDraft>;
+  options?: { label: string }[] | null;
 }
 
-export interface OptionTile {
-  label: string;
-  value: string;
-}
-
-export interface QualityCheck {
-  label: string;
-  passed: boolean;
-  detail: string;
-}
-
-export interface EvaluationResult {
-  qualityChecks: QualityCheck[];
-  suggestions: string[];
-  improvedStory: StoryDraft;
-  learnings: string[];
-}
-
-export type WizardStep = 1 | 2 | 3 | 4;
-
+/** Empty defaults */
 export const EMPTY_STORY: StoryDraft = {
+  title: '',
   asA: '',
   iWant: '',
   soThat: '',
   description: '',
   acceptanceCriteria: [],
-  priority: 'medium',
-  size: 'M',
-  tags: [],
+  metadata: { project: '', epic: '', priority: 'Medium', estimate: '' },
 };
 
-export const EMPTY_CONTEXT: ProductContext = {
+export const EMPTY_CONTEXT: ProductContextInput = {
   mission: '',
   northStar: '',
   persona: '',

@@ -1,30 +1,32 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import type { StoryDraft, EvaluateResponse } from '@/services/types';
 import {
   WizardStep,
-  ProductContext,
-  StoryDraft,
-  ChatMessage,
-  EvaluationResult,
+  ProductContextInput,
+  UIChatMessage,
   EMPTY_STORY,
   EMPTY_CONTEXT,
 } from '@/types/wizard';
 
 interface WizardState {
   step: WizardStep;
-  productContext: ProductContext;
+  productContext: ProductContextInput;
+  contextId: string | null;
+  sessionId: string;
   story: StoryDraft;
-  chatHistory: ChatMessage[];
-  evaluation: EvaluationResult | null;
+  chatHistory: UIChatMessage[];
+  evaluation: EvaluateResponse | null;
   savedStories: StoryDraft[];
 }
 
 interface WizardActions {
   setStep: (step: WizardStep) => void;
-  setProductContext: (ctx: ProductContext) => void;
+  setProductContext: (ctx: ProductContextInput) => void;
+  setContextId: (id: string) => void;
   updateStory: (update: Partial<StoryDraft>) => void;
   setStory: (story: StoryDraft) => void;
-  addMessage: (msg: ChatMessage) => void;
-  setEvaluation: (result: EvaluationResult | null) => void;
+  addMessage: (msg: UIChatMessage) => void;
+  setEvaluation: (result: EvaluateResponse | null) => void;
   saveStory: (story: StoryDraft) => void;
   resetStory: () => void;
 }
@@ -33,10 +35,12 @@ const WizardContext = createContext<(WizardState & WizardActions) | null>(null);
 
 export function WizardProvider({ children }: { children: React.ReactNode }) {
   const [step, setStep] = useState<WizardStep>(1);
-  const [productContext, setProductContext] = useState<ProductContext>(EMPTY_CONTEXT);
+  const [productContext, setProductContext] = useState<ProductContextInput>(EMPTY_CONTEXT);
+  const [contextId, setContextId] = useState<string | null>(null);
+  const [sessionId] = useState(() => crypto.randomUUID?.() ?? `${Date.now()}`);
   const [story, setStoryState] = useState<StoryDraft>(EMPTY_STORY);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
+  const [chatHistory, setChatHistory] = useState<UIChatMessage[]>([]);
+  const [evaluation, setEvaluation] = useState<EvaluateResponse | null>(null);
   const [savedStories, setSavedStories] = useState<StoryDraft[]>([]);
 
   const updateStory = useCallback((update: Partial<StoryDraft>) => {
@@ -45,11 +49,8 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
 
   const setStory = useCallback((s: StoryDraft) => setStoryState(s), []);
 
-  const addMessage = useCallback((msg: ChatMessage) => {
+  const addMessage = useCallback((msg: UIChatMessage) => {
     setChatHistory(prev => [...prev, msg]);
-    if (msg.storyUpdate) {
-      setStoryState(prev => ({ ...prev, ...msg.storyUpdate }));
-    }
   }, []);
 
   const saveStory = useCallback((s: StoryDraft) => {
@@ -68,6 +69,8 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
       value={{
         step, setStep,
         productContext, setProductContext,
+        contextId, setContextId,
+        sessionId,
         story, updateStory, setStory,
         chatHistory, addMessage,
         evaluation, setEvaluation,
