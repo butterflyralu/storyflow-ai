@@ -111,8 +111,8 @@ function EditableField({
       <div>
         {multiline ? (
           <textarea value={draft} onChange={e => setDraft(e.target.value)} onBlur={save}
-            className="w-full rounded border-0 bg-transparent px-0 py-0 text-sm text-foreground focus:outline-none focus:ring-0 resize-none placeholder:text-muted-foreground placeholder:italic"
-            rows={3} placeholder="Not yet defined..." />
+            className="w-full rounded border-0 bg-transparent px-0 py-0 text-sm text-foreground focus:outline-none focus:ring-0 resize-y placeholder:text-muted-foreground placeholder:italic min-h-[4.5rem]"
+            rows={5} placeholder="Not yet defined..." />
         ) : (
           <input value={draft} onChange={e => setDraft(e.target.value)} onBlur={save}
             className="w-full rounded border-0 bg-transparent px-0 py-0 text-sm text-foreground focus:outline-none focus:ring-0 placeholder:text-muted-foreground placeholder:italic"
