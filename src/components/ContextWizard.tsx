@@ -13,10 +13,10 @@ import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TILE_COLORS: Record<number, string> = {
-  0: 'border-peach/40 bg-peach-light text-peach',
-  1: 'border-mint/40 bg-mint-light text-mint',
-  2: 'border-sky/40 bg-sky-light text-sky',
-  3: 'border-lavender/40 bg-lavender-light text-lavender',
+  0: 'border-primary/40 bg-accent text-accent-foreground',
+  1: 'border-violet/40 bg-violet-light text-violet',
+  2: 'border-indigo/40 bg-indigo-light text-indigo',
+  3: 'border-rose/40 bg-rose-light text-rose',
 };
 
 function TileSelect<T extends string>({
@@ -39,7 +39,7 @@ function TileSelect<T extends string>({
             'flex-1 min-w-[100px] rounded-2xl border-2 p-4 text-left transition-all duration-200',
             value === opt.value
               ? cn('shadow-soft', TILE_COLORS[i % 4])
-              : 'border-border bg-card hover:border-muted-foreground/20 hover:shadow-soft',
+              : 'border-border bg-card hover:border-primary/20 hover:shadow-soft',
           )}
         >
           <div className="text-sm font-semibold">{opt.label}</div>
@@ -60,9 +60,9 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 }
 
 const SCREEN_TITLES = [
-  { title: 'Product Basics', subtitle: 'Tell us about your product so we can tailor story drafting to your context.', color: 'peach' },
-  { title: 'Users & Product', subtitle: 'Help us understand who uses your product and what it does.', color: 'mint' },
-  { title: 'Strategy & Goals', subtitle: 'Define your goals and how you like your stories structured.', color: 'sky' },
+  { title: 'Product Basics', subtitle: 'Tell us about your product so we can tailor story drafting to your context.' },
+  { title: 'Users & Product', subtitle: 'Help us understand who uses your product and what it does.' },
+  { title: 'Strategy & Goals', subtitle: 'Define your goals and how you like your stories structured.' },
 ];
 
 export function ContextWizard() {
@@ -115,11 +115,11 @@ export function ContextWizard() {
           <div
             key={i}
             className={cn(
-              'flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium transition-all duration-300',
+              'flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300',
               i === screen
                 ? 'bg-primary text-primary-foreground shadow-soft'
                 : i < screen
-                  ? 'bg-mint-light text-mint'
+                  ? 'bg-accent text-accent-foreground'
                   : 'bg-muted text-muted-foreground',
             )}
           >
@@ -134,9 +134,9 @@ export function ContextWizard() {
         ))}
       </div>
 
-      <Card className="w-full max-w-xl border-0 shadow-soft-lg rounded-3xl">
+      <Card className="w-full max-w-xl border-0 shadow-card rounded-3xl">
         <CardContent className="p-8 sm:p-10">
-          <h2 className="mb-1 font-display text-2xl font-semibold tracking-tight text-foreground">{info.title}</h2>
+          <h2 className="mb-1 font-display text-2xl font-bold tracking-tight text-foreground">{info.title}</h2>
           <p className="mb-7 text-sm text-muted-foreground">{info.subtitle}</p>
 
           {screen === 0 && (
@@ -246,7 +246,7 @@ export function ContextWizard() {
             key={i}
             className={cn(
               'h-2 rounded-full transition-all duration-300',
-              i < screen ? 'w-2 bg-mint' : i === screen ? 'w-8 bg-primary' : 'w-2 bg-border',
+              i < screen ? 'w-2 bg-accent-foreground' : i === screen ? 'w-8 bg-primary' : 'w-2 bg-border',
             )}
           />
         ))}

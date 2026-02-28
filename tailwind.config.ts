@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["DM Sans", "system-ui", "sans-serif"],
-        display: ["Fraunces", "Georgia", "serif"],
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -61,21 +61,26 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        peach: {
-          DEFAULT: "hsl(var(--peach))",
-          light: "hsl(var(--peach-light))",
+        purple: {
+          DEFAULT: "hsl(var(--purple))",
+          light: "hsl(var(--purple-light))",
+          dark: "hsl(var(--purple-dark))",
         },
-        mint: {
-          DEFAULT: "hsl(var(--mint))",
-          light: "hsl(var(--mint-light))",
+        violet: {
+          DEFAULT: "hsl(var(--violet))",
+          light: "hsl(var(--violet-light))",
         },
-        sky: {
-          DEFAULT: "hsl(var(--sky))",
-          light: "hsl(var(--sky-light))",
+        indigo: {
+          DEFAULT: "hsl(var(--indigo))",
+          light: "hsl(var(--indigo-light))",
         },
-        lavender: {
-          DEFAULT: "hsl(var(--lavender))",
-          light: "hsl(var(--lavender-light))",
+        rose: {
+          DEFAULT: "hsl(var(--rose))",
+          light: "hsl(var(--rose-light))",
+        },
+        "panel-dark": {
+          DEFAULT: "hsl(var(--panel-dark))",
+          foreground: "hsl(var(--panel-dark-foreground))",
         },
       },
       borderRadius: {
@@ -84,8 +89,9 @@ export default {
         sm: "calc(var(--radius) - 8px)",
       },
       boxShadow: {
-        soft: "0 2px 20px -4px hsl(20 20% 15% / 0.06)",
-        "soft-lg": "0 8px 30px -6px hsl(20 20% 15% / 0.1)",
+        soft: "0 2px 20px -4px hsl(258 60% 50% / 0.08)",
+        "soft-lg": "0 8px 30px -6px hsl(258 60% 50% / 0.12)",
+        "card": "0 1px 3px hsl(258 30% 50% / 0.06), 0 6px 16px -4px hsl(258 30% 50% / 0.08)",
       },
       keyframes: {
         "accordion-down": {
