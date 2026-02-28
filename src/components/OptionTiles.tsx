@@ -15,7 +15,7 @@ export function OptionTiles({ options, onSelect }: Props) {
           className={cn(
             'rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-medium',
             'text-foreground shadow-soft transition-all duration-200',
-            'hover:border-primary/30 hover:bg-peach-light hover:shadow-soft-lg',
+            'hover:border-primary/30 hover:bg-accent hover:shadow-soft-lg',
             'active:scale-[0.97]',
           )}
         >

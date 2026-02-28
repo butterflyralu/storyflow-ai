@@ -181,10 +181,10 @@ export function ChatPanel() {
             >
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-soft',
+                  'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
                   msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-br-sm'
-                    : 'bg-card text-foreground rounded-bl-sm border border-border',
+                    ? 'bg-primary text-primary-foreground rounded-br-sm shadow-soft'
+                    : 'bg-card text-foreground rounded-bl-sm border border-border shadow-card',
                 )}
               >
                 <div className="whitespace-pre-wrap">{msg.content}</div>
@@ -198,7 +198,7 @@ export function ChatPanel() {
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="rounded-2xl rounded-bl-sm bg-card border border-border px-4 py-3 shadow-soft">
+              <div className="rounded-2xl rounded-bl-sm bg-card border border-border px-4 py-3 shadow-card">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             </div>
