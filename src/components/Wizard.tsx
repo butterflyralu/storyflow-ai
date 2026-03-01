@@ -1,4 +1,5 @@
 import { useWizard } from '@/context/WizardContext';
+import logo from '@/assets/logo.jpeg';
 import { ContextWizard } from '@/components/ContextWizard';
 import { ChatPanel } from '@/components/ChatPanel';
 import { StoryPreview } from '@/components/StoryPreview';
@@ -13,9 +14,7 @@ export function Wizard() {
         <div className="mx-auto max-w-7xl">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground text-sm font-bold">
-                S
-              </div>
+              <img src={logo} alt="StoryFlow AI" className="h-8 w-8 rounded-xl object-cover" />
               <h1 className="text-lg font-bold tracking-tight text-foreground">
                 StoryFlow AI
               </h1>
