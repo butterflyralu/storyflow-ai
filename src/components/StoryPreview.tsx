@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { MarkdownText } from '@/components/MarkdownText';
 import { useWizard } from '@/context/WizardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -317,7 +318,7 @@ export function StoryPreview() {
                     {group.items.map((item, ii) => (
                       <li key={ii} className="flex items-start gap-2 text-sm text-foreground">
                         <span className="mt-0.5 text-primary">✓</span>
-                        <span>{item}</span>
+                        <MarkdownText content={item} />
                       </li>
                     ))}
                   </ul>

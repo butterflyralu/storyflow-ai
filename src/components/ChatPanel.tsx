@@ -5,6 +5,7 @@ import type { UIChatMessage } from '@/types/wizard';
 import { EMPTY_STORY } from '@/types/wizard';
 import { OptionTiles } from '@/components/OptionTiles';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { MarkdownText } from '@/components/MarkdownText';
 import { Button } from '@/components/ui/button';
 import { Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -199,7 +200,7 @@ export function ChatPanel() {
                     : 'bg-card text-foreground rounded-bl-sm border border-border shadow-card',
                 )}
               >
-                <div className="whitespace-pre-wrap">{msg.content}</div>
+                <MarkdownText content={msg.content} />
                 {msg.options && msg.options.length > 0 && (
                   <div className="mt-3">
                     <OptionTiles options={msg.options} onSelect={sendMessage} />
