@@ -7,14 +7,17 @@ import { cn } from '@/lib/utils';
  * keywords appear on separate lines.
  */
 export function MarkdownText({ content, className }: { content: string; className?: string }) {
-  // Ensure Gherkin keywords start on new lines
-  const processed = content
-    .replace(/(?<!\n)(Given\s)/g, '\n$1')
-    .replace(/(?<!\n)(When\s)/g, '\n$1')
-    .replace(/(?<!\n)(Then\s)/g, '\n$1')
-    .replace(/(?<!\n)(And\s)/g, '\n$1')
-    .replace(/(?<!\n)(But\s)/g, '\n$1')
-    .replace(/^\n/, ''); // trim leading newline from first keyword
+  // Replace literal \n with actual newlines first
+  let processed = content.replace(/\\n/g, '\n');
+
+  // Ensure Gherkin keywords start on new lines (use double newline for markdown paragraph break)
+  processed = processed
+    .replace(/(?<!\n)\s*(Given\s)/g, '\n\n$1')
+    .replace(/(?<!\n)\s*(When\s)/g, '\n\n$1')
+    .replace(/(?<!\n)\s*(Then\s)/g, '\n\n$1')
+    .replace(/(?<!\n)\s*(And\s)/g, '\n\n$1')
+    .replace(/(?<!\n)\s*(But\s)/g, '\n\n$1')
+    .replace(/^\n+/, ''); // trim leading newlines from first keyword
 
   return (
     <div className={cn('prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0', className)}>
