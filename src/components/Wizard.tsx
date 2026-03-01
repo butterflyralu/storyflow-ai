@@ -10,8 +10,9 @@ export function Wizard() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl">
+      <header className="relative border-b border-border overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/40 to-primary/10 bg-[length:200%_200%] animate-gradient" />
+        <div className="relative mx-auto max-w-7xl backdrop-blur-sm">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-3">
               <img src={logo} alt="StoryFlow AI" className="h-8 w-8 rounded-xl object-cover" />
