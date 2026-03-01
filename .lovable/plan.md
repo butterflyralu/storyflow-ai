@@ -1,20 +1,33 @@
 
 
-## Plan: Show Epic Name on Split Sub-Stories
+## Plan: Add Logo and Adapt Styling to Blue Gradient Theme
 
-The `metadata.epic` field already exists in `StoryMetadata` but isn't being populated or displayed. Two changes needed:
+The uploaded image is a blue-gradient logo for StoryFlow AI. Two things to do: use it as favicon + header logo, and shift the color palette from purple to blue to match.
 
 ### Steps
 
-1. **`supabase/functions/split-story/index.ts`** — Update the system prompt to instruct the AI to set each sub-story's `metadata.epic` field to the original epic's title
+1. **Copy logo to public directory** — Copy `user-uploads://storyflowAI.jpeg` to `public/logo.jpeg` for favicon and to `src/assets/logo.jpeg` for component use
 
-2. **`src/components/SplitStoriesView.tsx`** — Display the `metadata.epic` field in each story card (read-only badge or label below the title showing "Epic: {name}")
+2. **Update `index.html`** — Add favicon link pointing to `/logo.jpeg`
 
-3. **`src/context/WizardContext.tsx`** — In `confirmSplitStories`, ensure the epic field is populated from the original story title if the AI didn't set it (fallback)
+3. **Update `src/components/Wizard.tsx`** — Replace the "S" placeholder div with an `<img>` tag using the imported logo asset
+
+4. **Update `src/index.css`** — Shift the color palette from purple (258°) to blue (210-220°) to match the logo's gradient:
+   - `--primary`: purple → blue (e.g., `210 80% 50%`)
+   - `--accent`: purple-tinted → blue-tinted
+   - `--ring`: match primary
+   - All `--purple`, `--violet`, `--indigo` custom vars → blue range
+   - `--panel-dark` → dark navy
+   - Both light and dark mode vars updated
+
+5. **Update `tailwind.config.ts`** — No structural changes needed (colors reference CSS vars), but update shadow hue references from `258` to `210`
 
 | File | Change |
 |------|--------|
-| `supabase/functions/split-story/index.ts` | Add prompt instruction to set `metadata.epic` to epic title |
-| `src/components/SplitStoriesView.tsx` | Display epic name badge on each card |
-| `src/context/WizardContext.tsx` | Fallback: set `metadata.epic` from original story title on confirm |
+| `public/logo.jpeg` | Copy uploaded logo |
+| `src/assets/logo.jpeg` | Copy uploaded logo for imports |
+| `index.html` | Add `<link rel="icon">` |
+| `src/components/Wizard.tsx` | Replace placeholder with logo image |
+| `src/index.css` | Shift palette from purple to blue |
+| `tailwind.config.ts` | Update shadow hue values |
 
