@@ -6,108 +6,108 @@
 
 @layer base {
   :root {
-    --background: 240 20% 97%;
-    --foreground: 240 20% 16%;
+    --background: 210 25% 97%;
+    --foreground: 215 25% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 20% 16%;
+    --card-foreground: 215 25% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 20% 16%;
+    --popover-foreground: 215 25% 14%;
 
-    --primary: 258 60% 58%;
+    --primary: 215 75% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 15% 94%;
-    --secondary-foreground: 240 20% 30%;
+    --secondary: 210 18% 94%;
+    --secondary-foreground: 215 20% 30%;
 
-    --muted: 240 12% 94%;
-    --muted-foreground: 240 8% 52%;
+    --muted: 210 15% 94%;
+    --muted-foreground: 210 10% 50%;
 
-    --accent: 258 40% 94%;
-    --accent-foreground: 258 50% 40%;
+    --accent: 215 45% 93%;
+    --accent-foreground: 215 55% 38%;
 
     --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 12% 91%;
-    --input: 240 12% 91%;
-    --ring: 258 60% 58%;
+    --border: 210 15% 90%;
+    --input: 210 15% 90%;
+    --ring: 215 75% 50%;
 
     --radius: 1rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 15% 40%;
-    --sidebar-primary: 258 60% 58%;
+    --sidebar-foreground: 215 18% 40%;
+    --sidebar-primary: 215 75% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 258 40% 96%;
-    --sidebar-accent-foreground: 258 50% 40%;
-    --sidebar-border: 240 12% 93%;
-    --sidebar-ring: 258 60% 58%;
+    --sidebar-accent: 215 45% 95%;
+    --sidebar-accent-foreground: 215 55% 38%;
+    --sidebar-border: 210 15% 92%;
+    --sidebar-ring: 215 75% 50%;
 
     /* Extended palette */
-    --purple: 258 60% 58%;
-    --purple-light: 258 40% 94%;
-    --purple-dark: 258 45% 20%;
-    --violet: 270 50% 62%;
-    --violet-light: 270 40% 95%;
-    --indigo: 230 55% 60%;
-    --indigo-light: 230 40% 95%;
+    --purple: 215 75% 50%;
+    --purple-light: 215 45% 93%;
+    --purple-dark: 215 50% 18%;
+    --violet: 220 55% 55%;
+    --violet-light: 220 40% 95%;
+    --indigo: 225 55% 58%;
+    --indigo-light: 225 40% 95%;
     --rose: 340 65% 65%;
     --rose-light: 340 40% 95%;
-    --panel-dark: 250 30% 14%;
-    --panel-dark-foreground: 240 20% 85%;
+    --panel-dark: 215 35% 12%;
+    --panel-dark-foreground: 210 20% 85%;
   }
 
   .dark {
-    --background: 250 25% 8%;
-    --foreground: 240 15% 90%;
+    --background: 215 30% 8%;
+    --foreground: 210 15% 90%;
 
-    --card: 250 22% 12%;
-    --card-foreground: 240 15% 90%;
+    --card: 215 25% 12%;
+    --card-foreground: 210 15% 90%;
 
-    --popover: 250 22% 12%;
-    --popover-foreground: 240 15% 90%;
+    --popover: 215 25% 12%;
+    --popover-foreground: 210 15% 90%;
 
-    --primary: 258 55% 62%;
+    --primary: 215 70% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 250 18% 18%;
-    --secondary-foreground: 240 15% 80%;
+    --secondary: 215 20% 18%;
+    --secondary-foreground: 210 15% 80%;
 
-    --muted: 250 15% 16%;
-    --muted-foreground: 240 10% 55%;
+    --muted: 215 18% 16%;
+    --muted-foreground: 210 12% 55%;
 
-    --accent: 258 30% 22%;
-    --accent-foreground: 258 40% 82%;
+    --accent: 215 30% 22%;
+    --accent-foreground: 215 40% 80%;
 
     --destructive: 0 55% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 250 15% 18%;
-    --input: 250 15% 18%;
-    --ring: 258 55% 62%;
+    --border: 215 18% 18%;
+    --input: 215 18% 18%;
+    --ring: 215 70% 55%;
 
-    --sidebar-background: 250 25% 10%;
-    --sidebar-foreground: 240 12% 70%;
-    --sidebar-primary: 258 55% 62%;
+    --sidebar-background: 215 30% 10%;
+    --sidebar-foreground: 210 15% 70%;
+    --sidebar-primary: 215 70% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 258 25% 18%;
-    --sidebar-accent-foreground: 258 35% 80%;
-    --sidebar-border: 250 15% 16%;
-    --sidebar-ring: 258 55% 62%;
+    --sidebar-accent: 215 25% 18%;
+    --sidebar-accent-foreground: 215 35% 80%;
+    --sidebar-border: 215 18% 16%;
+    --sidebar-ring: 215 70% 55%;
 
-    --purple: 258 55% 62%;
-    --purple-light: 258 30% 20%;
-    --purple-dark: 258 40% 10%;
-    --violet: 270 45% 55%;
-    --violet-light: 270 25% 18%;
-    --indigo: 230 45% 50%;
-    --indigo-light: 230 25% 18%;
+    --purple: 215 70% 55%;
+    --purple-light: 215 30% 20%;
+    --purple-dark: 215 40% 10%;
+    --violet: 220 50% 50%;
+    --violet-light: 220 25% 18%;
+    --indigo: 225 45% 50%;
+    --indigo-light: 225 25% 18%;
     --rose: 340 55% 55%;
     --rose-light: 340 25% 18%;
-    --panel-dark: 250 30% 10%;
-    --panel-dark-foreground: 240 15% 80%;
+    --panel-dark: 215 35% 10%;
+    --panel-dark-foreground: 210 15% 80%;
   }
 }
 

@@ -89,9 +89,9 @@ export default {
         sm: "calc(var(--radius) - 8px)",
       },
       boxShadow: {
-        soft: "0 2px 20px -4px hsl(258 60% 50% / 0.08)",
-        "soft-lg": "0 8px 30px -6px hsl(258 60% 50% / 0.12)",
-        "card": "0 1px 3px hsl(258 30% 50% / 0.06), 0 6px 16px -4px hsl(258 30% 50% / 0.08)",
+        soft: "0 2px 20px -4px hsl(215 75% 50% / 0.08)",
+        "soft-lg": "0 8px 30px -6px hsl(215 75% 50% / 0.12)",
+        "card": "0 1px 3px hsl(215 40% 50% / 0.06), 0 6px 16px -4px hsl(215 40% 50% / 0.08)",
       },
       keyframes: {
         "accordion-down": {
