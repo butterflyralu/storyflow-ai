@@ -1,0 +1,7 @@
+project_id = "yruleizwbevoowmzbmtg"
+
+[functions.story-agent]
+verify_jwt = false
+
+[functions.split-story]
+verify_jwt = false
