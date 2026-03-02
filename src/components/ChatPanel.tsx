@@ -13,7 +13,7 @@ import { usePersistedChat } from '@/hooks/usePersistedChat';
 
 export function ChatPanel() {
   const {
-    chatHistory, addMessage, story, updateStory,
+    chatHistory, addMessage, setChatHistory, story, updateStory, setStory,
     productContext, contextId, sessionId,
     setEvaluation, setStep, saveStory, resetStory,
     pendingSplitStories, confirmSplitStories, clearPendingSplit,
@@ -79,7 +79,7 @@ export function ChatPanel() {
     }
 
     if (lower.includes('start a new story')) {
-      resetStory();
+      // Don't reset current story — just start a fresh session
       sessionTitleRef.current = '';
       // Create a new DB session
       const newSid = await createSession(contextId, 'New story');
@@ -87,6 +87,10 @@ export function ChatPanel() {
         setDbSessionId(newSid);
         triggerSidebarRefresh();
       }
+      // Reset story and chat for the NEW session only
+      setChatHistory([]);
+      setStory(EMPTY_STORY);
+      setEvaluation(null);
       // Generate context-aware suggestions
       setLoading(true);
       try {
