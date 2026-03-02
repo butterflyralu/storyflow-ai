@@ -86,10 +86,10 @@ export function Wizard() {
 
             {step === 2 && (
               <div className="flex h-full">
-                <div className="flex w-1/2 flex-col border-r border-border">
+                <div className="flex w-1/2 flex-col border-r border-border min-h-0">
                   <ChatPanel />
                 </div>
-                <div className="w-1/2 overflow-y-auto bg-muted/30">
+                <div className="w-1/2 overflow-y-auto min-h-0 bg-muted/30">
                   {splitStories.length > 0 ? <SplitStoriesView /> : <div className="p-5"><StoryPreview /></div>}
                 </div>
               </div>
