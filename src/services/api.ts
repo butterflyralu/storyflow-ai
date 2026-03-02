@@ -20,6 +20,53 @@ import {
   ValidateContextResponse,
 } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+// Retry wrapper with exponential backoff for rate-limited AI calls
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  { maxRetries = 3, baseDelay = 1000, label = 'AI request' } = {}
+): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const message = err?.message || '';
+      const isRateLimit = message.includes('429') || message.toLowerCase().includes('rate limit');
+      const isPaymentRequired = message.includes('402') || message.toLowerCase().includes('payment required');
+
+      if (isPaymentRequired) {
+        toast({
+          title: "AI credits exhausted",
+          description: "Please add credits in Settings → Workspace → Usage to continue.",
+          variant: "destructive",
+        });
+        throw err;
+      }
+
+      if (isRateLimit && attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        toast({
+          title: "AI is busy",
+          description: `Retrying in ${Math.round(delay / 1000)}s... (attempt ${attempt + 1}/${maxRetries})`,
+        });
+        await sleep(delay);
+        continue;
+      }
+
+      if (isRateLimit && attempt === maxRetries) {
+        toast({
+          title: "Rate limit reached",
+          description: "Please wait a moment and try again.",
+          variant: "destructive",
+        });
+      }
+
+      throw err;
+    }
+  }
+  throw new Error(`${label} failed after ${maxRetries} retries`);
+}
 
 const USE_MOCKS = true;
 
@@ -327,44 +374,48 @@ export const api = {
   },
 
   async storyAgent(input: StoryAgentRequest): Promise<StoryAgentResponse> {
-    const { data, error } = await supabase.functions.invoke('story-agent', {
-      body: {
-        message: input.message,
-        agentContext: input.agentContext,
-        history: input.history,
-        storyDraft: input.storyDraft,
-      },
-    });
+    return withRetry(async () => {
+      const { data, error } = await supabase.functions.invoke('story-agent', {
+        body: {
+          message: input.message,
+          agentContext: input.agentContext,
+          history: input.history,
+          storyDraft: input.storyDraft,
+        },
+      });
 
-    if (error) {
-      throw new Error(error.message || 'Story agent request failed');
-    }
+      if (error) {
+        throw new Error(error.message || 'Story agent request failed');
+      }
 
-    if (data?.error) {
-      throw new Error(data.error);
-    }
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-    return data as StoryAgentResponse;
+      return data as StoryAgentResponse;
+    }, { label: 'Story agent' });
   },
 
   async evaluateStory(input: EvaluateRequest): Promise<EvaluateResponse> {
-    const { data, error } = await supabase.functions.invoke('evaluate-story', {
-      body: {
-        story: input.story,
-        sessionId: input.sessionId,
-        contextId: input.contextId,
-      },
-    });
+    return withRetry(async () => {
+      const { data, error } = await supabase.functions.invoke('evaluate-story', {
+        body: {
+          story: input.story,
+          sessionId: input.sessionId,
+          contextId: input.contextId,
+        },
+      });
 
-    if (error) {
-      throw new Error(error.message || 'Evaluation request failed');
-    }
+      if (error) {
+        throw new Error(error.message || 'Evaluation request failed');
+      }
 
-    if (data?.error) {
-      throw new Error(data.error);
-    }
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-    return data as EvaluateResponse;
+      return data as EvaluateResponse;
+    }, { label: 'Evaluate story' });
   },
 
   getChecklist(contextId: string): Promise<GetChecklistResponse> {
@@ -386,21 +437,23 @@ export const api = {
   },
 
   async splitStory(input: SplitStoryRequest): Promise<SplitStoryResponse> {
-    const { data, error } = await supabase.functions.invoke('split-story', {
-      body: {
-        story: input.story,
-        agentContext: input.agentContext,
-      },
-    });
+    return withRetry(async () => {
+      const { data, error } = await supabase.functions.invoke('split-story', {
+        body: {
+          story: input.story,
+          agentContext: input.agentContext,
+        },
+      });
 
-    if (error) {
-      throw new Error(error.message || 'Split story request failed');
-    }
+      if (error) {
+        throw new Error(error.message || 'Split story request failed');
+      }
 
-    if (data?.error) {
-      throw new Error(data.error);
-    }
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-    return data as SplitStoryResponse;
+      return data as SplitStoryResponse;
+    }, { label: 'Split story' });
   },
 };
