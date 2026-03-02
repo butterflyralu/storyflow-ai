@@ -9,6 +9,7 @@ import { MarkdownText } from '@/components/MarkdownText';
 import { Button } from '@/components/ui/button';
 import { Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePersistedChat } from '@/hooks/usePersistedChat';
 
 export function ChatPanel() {
   const {
@@ -24,6 +25,8 @@ export function ChatPanel() {
   const initialized = useRef(false);
   const storyRef = useRef(story);
   storyRef.current = story;
+  const { createSession, saveMessage } = usePersistedChat();
+  const dbSessionRef = useRef<string | null>(null);
 
   // Initial greeting
   useEffect(() => {
@@ -42,11 +45,21 @@ export function ChatPanel() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
+  const ensureSession = useCallback(async () => {
+    if (!dbSessionRef.current) {
+      const sid = await createSession(contextId, 'Story session');
+      dbSessionRef.current = sid;
+    }
+    return dbSessionRef.current;
+  }, [createSession, contextId]);
+
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
 
+    const dbSid = await ensureSession();
     const userMsg: UIChatMessage = { id: String(Date.now()), role: 'user', content: text };
     addMessage(userMsg);
+    if (dbSid) saveMessage(dbSid, userMsg);
     setInput('');
 
     const lower = text.toLowerCase();
@@ -127,6 +140,7 @@ export function ChatPanel() {
         options: response.options,
       };
       addMessage(aiMsg);
+      if (dbSid) saveMessage(dbSid, aiMsg);
 
       if (response.awaitingCriteriaConfirmation) {
         const confirmLower = text.toLowerCase();
@@ -173,7 +187,7 @@ export function ChatPanel() {
     } finally {
       setLoading(false);
     }
-  }, [loading, chatHistory, addMessage, updateStory, productContext, contextId, sessionId, setEvaluation, setStep]);
+  }, [loading, chatHistory, addMessage, updateStory, productContext, contextId, sessionId, setEvaluation, setStep, ensureSession, saveMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
