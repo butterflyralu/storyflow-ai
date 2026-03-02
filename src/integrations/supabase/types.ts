@@ -14,7 +14,160 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          options: Json | null
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          options?: Json | null
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          options?: Json | null
+          role?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          context_id: string | null
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_id?: string | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_id?: string | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_contexts: {
+        Row: {
+          ac_format: string
+          created_at: string
+          id: string
+          industry: string
+          mission: string
+          north_star: string
+          objectives: string
+          persona: string
+          platform: string
+          product_description: string
+          product_name: string
+          product_type: string
+          strategy: string
+          updated_at: string
+          user_id: string
+          user_types: string
+        }
+        Insert: {
+          ac_format?: string
+          created_at?: string
+          id?: string
+          industry?: string
+          mission?: string
+          north_star?: string
+          objectives?: string
+          persona?: string
+          platform?: string
+          product_description?: string
+          product_name: string
+          product_type?: string
+          strategy?: string
+          updated_at?: string
+          user_id: string
+          user_types?: string
+        }
+        Update: {
+          ac_format?: string
+          created_at?: string
+          id?: string
+          industry?: string
+          mission?: string
+          north_star?: string
+          objectives?: string
+          persona?: string
+          platform?: string
+          product_description?: string
+          product_name?: string
+          product_type?: string
+          strategy?: string
+          updated_at?: string
+          user_id?: string
+          user_types?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

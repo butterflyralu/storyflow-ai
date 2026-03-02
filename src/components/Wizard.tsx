@@ -1,12 +1,16 @@
 import { useWizard } from '@/context/WizardContext';
+import { useAuth } from '@/context/AuthContext';
 import logo from '@/assets/logo.jpeg';
 import { ContextWizard } from '@/components/ContextWizard';
 import { ChatPanel } from '@/components/ChatPanel';
 import { StoryPreview } from '@/components/StoryPreview';
 import { SplitStoriesView } from '@/components/SplitStoriesView';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 
 export function Wizard() {
   const { step, splitStories } = useWizard();
+  const { user, signOut } = useAuth();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -20,8 +24,20 @@ export function Wizard() {
                 StoryFlow AI
               </h1>
             </div>
-            <div className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
-              AI Story Assistant
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
+                AI Story Assistant
+              </div>
+              {user && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                    {user.user_metadata?.full_name || user.email}
+                  </span>
+                  <Button variant="ghost" size="icon" onClick={signOut} className="h-8 w-8 rounded-xl">
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

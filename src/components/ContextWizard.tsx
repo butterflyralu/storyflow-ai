@@ -4,6 +4,7 @@ import type { ProductType, Platform } from '@/services/types';
 import type { ProductContextInput } from '@/types/wizard';
 import { EMPTY_CONTEXT } from '@/types/wizard';
 import { api } from '@/services/api';
+import { usePersistedContext } from '@/hooks/usePersistedContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -83,6 +84,7 @@ const SCREEN_TITLES = [
 export function ContextWizard() {
   const TOTAL_SCREENS = 3;
   const { setProductContext, setContextId, setStep } = useWizard();
+  const { saveContext: saveContextToDB } = usePersistedContext();
   const [screen, setScreen] = useState(0);
   const [values, setValues] = useState<ProductContextInput>({ ...EMPTY_CONTEXT });
   const [saving, setSaving] = useState(false);
@@ -102,8 +104,11 @@ export function ContextWizard() {
   const finalize = async () => {
     setSaving(true);
     try {
+      // Save to DB first
+      const dbId = await saveContextToDB(values);
+      // Also save via API for edge function context
       const { contextId } = await api.saveContext(values);
-      setContextId(contextId);
+      setContextId(dbId || contextId);
     } catch { /* continue */ }
     setSaving(false);
     setProductContext(values);
