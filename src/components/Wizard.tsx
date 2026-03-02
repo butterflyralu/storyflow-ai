@@ -81,16 +81,16 @@ export function Wizard() {
           </header>
 
           {/* Main content */}
-          <main className="flex-1 min-h-0">
+          <main className="flex-1 min-h-0 overflow-hidden">
             {step === 1 && <ContextWizard />}
 
             {step === 2 && (
-              <div className="flex h-full">
-                <div className="flex w-1/2 flex-col border-r border-border min-h-0">
+              <div className="flex h-full overflow-hidden">
+                <div className="flex w-1/2 flex-col border-r border-border min-h-0 overflow-hidden">
                   <ChatPanel />
                 </div>
-                <div className="w-1/2 overflow-y-auto min-h-0 bg-muted/30">
-                  {splitStories.length > 0 ? <SplitStoriesView /> : <div className="h-full p-5"><StoryPreview /></div>}
+                <div className="w-1/2 min-h-0 overflow-y-auto bg-muted/30">
+                  {splitStories.length > 0 ? <SplitStoriesView /> : <div className="p-5"><StoryPreview /></div>}
                 </div>
               </div>
             )}
