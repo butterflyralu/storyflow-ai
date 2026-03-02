@@ -15,9 +15,10 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Plus, Settings, Loader2, HelpCircle } from 'lucide-react';
+import { MessageSquare, Plus, Settings, Loader2, HelpCircle, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 interface SavedSession {
   id: string;
@@ -29,6 +30,8 @@ interface SavedSession {
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
+  const isAdmin = useIsAdmin();
+  const navigate = useNavigate();
   const {
     contextId, setStep,
     setChatHistory, setDbSessionId, dbSessionId,
@@ -148,6 +151,17 @@ export function AppSidebar() {
             >
               <Settings className="h-3.5 w-3.5" />
               Edit Context
+            </Button>
+          )}
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => navigate('/admin')}
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              AI Quality Dashboard
             </Button>
           )}
           <Button
