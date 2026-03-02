@@ -72,7 +72,7 @@ export function AppSidebar() {
     // Reset chat when switching context
     setChatHistory([]);
     setDbSessionId(null);
-    setStep(2);
+    setStep(3); // Show context details/edit page
   };
 
   const handleSelectSession = async (session: SavedSession) => {
