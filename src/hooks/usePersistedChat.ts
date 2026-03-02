@@ -32,6 +32,15 @@ export function usePersistedChat() {
     });
   }, [user]);
 
+  const updateSessionTitle = useCallback(async (sessionId: string, title: string) => {
+    if (!user) return;
+    await supabase
+      .from('chat_sessions')
+      .update({ title, updated_at: new Date().toISOString() })
+      .eq('id', sessionId)
+      .eq('user_id', user.id);
+  }, [user]);
+
   const loadSessions = useCallback(async (contextId?: string) => {
     if (!user) return [];
     let query = supabase
@@ -60,5 +69,5 @@ export function usePersistedChat() {
     }));
   }, [user]);
 
-  return { createSession, saveMessage, loadSessions, loadMessages };
+  return { createSession, saveMessage, updateSessionTitle, loadSessions, loadMessages };
 }
