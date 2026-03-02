@@ -25,7 +25,8 @@ export function ChatPanel() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const storyRef = useRef(story);
   storyRef.current = story;
-  const { createSession, saveMessage } = usePersistedChat();
+  const { createSession, saveMessage, updateSessionTitle } = usePersistedChat();
+  const sessionTitleRef = useRef<string>('');
 
   // Initial greeting - show when no chat history (new session)
   useEffect(() => {
@@ -125,6 +126,12 @@ export function ChatPanel() {
       });
 
       updateStory(response.storyDraft);
+
+      // Rename session to story title when it first appears
+      if (response.storyDraft.title && response.storyDraft.title !== sessionTitleRef.current && dbSid) {
+        sessionTitleRef.current = response.storyDraft.title;
+        updateSessionTitle(dbSid, response.storyDraft.title);
+      }
 
       // Handle split confirmation
       if (response.confirmSplit && response.confirmSplit.length > 0 && pendingSplitStories.length > 0) {
