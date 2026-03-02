@@ -1,16 +1,47 @@
+import { useEffect, useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { useAuth } from '@/context/AuthContext';
+import { usePersistedContext } from '@/hooks/usePersistedContext';
 import logo from '@/assets/logo.jpeg';
 import { ContextWizard } from '@/components/ContextWizard';
 import { ChatPanel } from '@/components/ChatPanel';
 import { StoryPreview } from '@/components/StoryPreview';
 import { SplitStoriesView } from '@/components/SplitStoriesView';
+import { ProductContextSettings } from '@/components/ProductContextSettings';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings, Loader2 } from 'lucide-react';
 
 export function Wizard() {
-  const { step, splitStories } = useWizard();
+  const { step, setStep, splitStories, setProductContext, setContextId } = useWizard();
   const { user, signOut } = useAuth();
+  const { loadContexts } = usePersistedContext();
+  const [loadingContext, setLoadingContext] = useState(true);
+
+  // Auto-load saved context on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const contexts = await loadContexts();
+      if (cancelled) return;
+      if (contexts.length > 0) {
+        const latest = contexts[0];
+        setProductContext(latest);
+        setContextId(latest.id);
+        setStep(2); // skip wizard, go straight to chat
+      }
+      setLoadingContext(false);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []); // only run once on mount
+
+  if (loadingContext) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -25,6 +56,13 @@ export function Wizard() {
               </h1>
             </div>
             <div className="flex items-center gap-3">
+              {step === 2 && (
+                <Button variant="ghost" size="sm" onClick={() => setStep(3)}
+                  className="rounded-xl gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+                  <Settings className="h-3.5 w-3.5" />
+                  Context
+                </Button>
+              )}
               <div className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
                 AI Story Assistant
               </div>
@@ -56,6 +94,8 @@ export function Wizard() {
             </div>
           </div>
         )}
+
+        {step === 3 && <ProductContextSettings />}
       </main>
     </div>
   );

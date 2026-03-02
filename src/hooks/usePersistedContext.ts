@@ -26,9 +26,34 @@ export function usePersistedContext() {
         ac_format: ctx.acFormat,
       })
       .select('id')
-      .single();
+      .maybeSingle();
     if (error) { console.error('Save context error:', error); return null; }
     return data?.id ?? null;
+  }, [user]);
+
+  const updateContext = useCallback(async (id: string, ctx: ProductContextInput): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase
+      .from('product_contexts')
+      .update({
+        product_name: ctx.productName,
+        industry: ctx.industry,
+        product_type: ctx.productType,
+        platform: ctx.platform,
+        user_types: ctx.userTypes,
+        product_description: ctx.productDescription,
+        mission: ctx.mission,
+        north_star: ctx.northStar,
+        persona: ctx.persona,
+        strategy: ctx.strategy,
+        objectives: ctx.objectives,
+        ac_format: ctx.acFormat,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (error) { console.error('Update context error:', error); return false; }
+    return true;
   }, [user]);
 
   const loadContexts = useCallback(async (): Promise<(ProductContextInput & { id: string })[]> => {
@@ -56,5 +81,5 @@ export function usePersistedContext() {
     }));
   }, [user]);
 
-  return { saveContext, loadContexts };
+  return { saveContext, updateContext, loadContexts };
 }
