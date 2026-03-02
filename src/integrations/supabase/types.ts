@@ -87,6 +87,81 @@ export type Database = {
           },
         ]
       }
+      generated_stories: {
+        Row: {
+          acceptance_criteria: Json
+          as_a: string
+          context_id: string | null
+          created_at: string
+          description: string
+          evaluation_improved_story: Json | null
+          evaluation_learning_insight: Json | null
+          evaluation_result: string | null
+          evaluation_scorecard: Json | null
+          i_want: string
+          id: string
+          is_likely_epic: boolean | null
+          metadata: Json
+          session_id: string | null
+          so_that: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          acceptance_criteria?: Json
+          as_a?: string
+          context_id?: string | null
+          created_at?: string
+          description?: string
+          evaluation_improved_story?: Json | null
+          evaluation_learning_insight?: Json | null
+          evaluation_result?: string | null
+          evaluation_scorecard?: Json | null
+          i_want?: string
+          id?: string
+          is_likely_epic?: boolean | null
+          metadata?: Json
+          session_id?: string | null
+          so_that?: string
+          title?: string
+          user_id: string
+        }
+        Update: {
+          acceptance_criteria?: Json
+          as_a?: string
+          context_id?: string | null
+          created_at?: string
+          description?: string
+          evaluation_improved_story?: Json | null
+          evaluation_learning_insight?: Json | null
+          evaluation_result?: string | null
+          evaluation_scorecard?: Json | null
+          i_want?: string
+          id?: string
+          is_likely_epic?: boolean | null
+          metadata?: Json
+          session_id?: string | null
+          so_that?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_stories_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_stories_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_contexts: {
         Row: {
           ac_format: string

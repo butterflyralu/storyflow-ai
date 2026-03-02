@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePersistedChat } from '@/hooks/usePersistedChat';
+import { useStorySaver } from '@/hooks/useStorySaver';
 
 export function ChatPanel() {
   const {
@@ -27,6 +28,7 @@ export function ChatPanel() {
   const storyRef = useRef(story);
   storyRef.current = story;
   const { createSession, saveMessage, updateSessionTitle } = usePersistedChat();
+  const { saveGeneratedStory } = useStorySaver();
   const sessionTitleRef = useRef<string>('');
 
   // Initial greeting - show when no chat history (new session)
@@ -71,6 +73,7 @@ export function ChatPanel() {
       try {
         await new Promise(r => setTimeout(r, 500));
         saveStory(storyRef.current);
+        await saveGeneratedStory(storyRef.current, { contextId, sessionId: dbSid });
         addMessage({ id: String(Date.now() + 1), role: 'assistant', content: '✅ Story saved! You can start a new story whenever you\'re ready.', options: [{ label: 'Start a new story' }] });
       } catch {
         addMessage({ id: String(Date.now() + 1), role: 'assistant', content: 'Failed to save. Please try again.' });
@@ -221,6 +224,8 @@ export function ChatPanel() {
               story: response.storyDraft,
             });
             setEvaluation(evalResult);
+            // Auto-save story + evaluation for AI quality analysis
+            await saveGeneratedStory(response.storyDraft, { contextId, sessionId: dbSid, evaluation: evalResult });
             addMessage({
               id: String(Date.now() + 4),
               role: 'assistant',
