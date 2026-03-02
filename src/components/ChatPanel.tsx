@@ -18,20 +18,18 @@ export function ChatPanel() {
     setEvaluation, setStep, saveStory, resetStory,
     pendingSplitStories, confirmSplitStories, clearPendingSplit,
     setEpicSummary, setSplitStories,
+    dbSessionId, setDbSessionId,
   } = useWizard();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
   const storyRef = useRef(story);
   storyRef.current = story;
   const { createSession, saveMessage } = usePersistedChat();
-  const dbSessionRef = useRef<string | null>(null);
 
-  // Initial greeting
+  // Initial greeting - show when no chat history (new session)
   useEffect(() => {
-    if (!initialized.current && chatHistory.length === 0) {
-      initialized.current = true;
+    if (chatHistory.length === 0) {
       const greeting: UIChatMessage = {
         id: String(Date.now()),
         role: 'assistant',
@@ -39,19 +37,20 @@ export function ChatPanel() {
       };
       addMessage(greeting);
     }
-  }, []);
+  }, [dbSessionId]); // re-run when session changes
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
   const ensureSession = useCallback(async () => {
-    if (!dbSessionRef.current) {
+    if (!dbSessionId) {
       const sid = await createSession(contextId, 'Story session');
-      dbSessionRef.current = sid;
+      if (sid) setDbSessionId(sid);
+      return sid;
     }
-    return dbSessionRef.current;
-  }, [createSession, contextId]);
+    return dbSessionId;
+  }, [createSession, contextId, dbSessionId, setDbSessionId]);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
