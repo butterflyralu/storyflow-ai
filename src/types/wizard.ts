@@ -20,7 +20,7 @@ export type {
 };
 
 /** The wizard step numbers */
-export type WizardStep = 1 | 2;
+export type WizardStep = 1 | 2 | 3;
 
 /**
  * Product context used internally in the wizard (no contextId/lastUpdated
