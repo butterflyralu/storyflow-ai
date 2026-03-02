@@ -13,6 +13,7 @@ interface WizardState {
   productContext: ProductContextInput;
   contextId: string | null;
   sessionId: string;
+  dbSessionId: string | null;
   story: StoryDraft;
   chatHistory: UIChatMessage[];
   evaluation: EvaluateResponse | null;
@@ -30,6 +31,8 @@ interface WizardActions {
   updateStory: (update: Partial<StoryDraft>) => void;
   setStory: (story: StoryDraft) => void;
   addMessage: (msg: UIChatMessage) => void;
+  setChatHistory: (msgs: UIChatMessage[]) => void;
+  setDbSessionId: (id: string | null) => void;
   setEvaluation: (result: EvaluateResponse | null) => void;
   saveStory: (story: StoryDraft) => void;
   resetStory: () => void;
@@ -51,6 +54,7 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
   const [productContext, setProductContext] = useState<ProductContextInput>(EMPTY_CONTEXT);
   const [contextId, setContextId] = useState<string | null>(null);
   const [sessionId] = useState(() => crypto.randomUUID?.() ?? `${Date.now()}`);
+  const [dbSessionId, setDbSessionId] = useState<string | null>(null);
   const [story, setStoryState] = useState<StoryDraft>(EMPTY_STORY);
   const [chatHistory, setChatHistory] = useState<UIChatMessage[]>([]);
   const [evaluation, setEvaluation] = useState<EvaluateResponse | null>(null);
@@ -133,9 +137,9 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
         step, setStep,
         productContext, setProductContext,
         contextId, setContextId,
-        sessionId,
+        sessionId, dbSessionId, setDbSessionId,
         story, updateStory, setStory,
-        chatHistory, addMessage,
+        chatHistory, addMessage, setChatHistory,
         evaluation, setEvaluation,
         savedStories, saveStory,
         resetStory,
