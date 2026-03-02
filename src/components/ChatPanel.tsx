@@ -19,6 +19,7 @@ export function ChatPanel() {
     pendingSplitStories, confirmSplitStories, clearPendingSplit,
     setEpicSummary, setSplitStories,
     dbSessionId, setDbSessionId,
+    triggerSidebarRefresh,
   } = useWizard();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,11 +35,13 @@ export function ChatPanel() {
       const greeting: UIChatMessage = {
         id: String(Date.now()),
         role: 'assistant',
-        content: 'What user story would you like to draft? Just describe what you have in mind — I\'ll help shape it.',
+        content: productContext.productName
+          ? `What user story would you like to draft for **${productContext.productName}**? Just describe what you have in mind — I'll help shape it.`
+          : 'What user story would you like to draft? Just describe what you have in mind — I\'ll help shape it.',
       };
       addMessage(greeting);
     }
-  }, [dbSessionId]); // re-run when session changes
+  }, [dbSessionId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,7 +80,55 @@ export function ChatPanel() {
 
     if (lower.includes('start a new story')) {
       resetStory();
-      addMessage({ id: String(Date.now() + 1), role: 'assistant', content: 'Fresh start! What user story would you like to draft?', options: [{ label: '🔐 Authentication story' }, { label: '📊 Dashboard feature' }, { label: '🔔 Notifications' }, { label: '✏️ Something else' }] });
+      sessionTitleRef.current = '';
+      // Create a new DB session
+      const newSid = await createSession(contextId, 'New story');
+      if (newSid) {
+        setDbSessionId(newSid);
+        triggerSidebarRefresh();
+      }
+      // Generate context-aware suggestions
+      setLoading(true);
+      try {
+        const response = await api.storyAgent({
+          message: `Suggest 4 brief user story topic ideas for ${productContext.productName} (${productContext.industry}, ${productContext.platform}). Target persona: ${productContext.persona}. Objectives: ${productContext.objectives}. Reply ONLY with a JSON array of 4 short labels, e.g. ["Label 1","Label 2","Label 3","Label 4"]. No other text.`,
+          sessionId,
+          contextId: contextId || '',
+          agentContext: {
+            productName: productContext.productName,
+            industry: productContext.industry,
+            productType: productContext.productType,
+            platform: productContext.platform,
+            userTypes: productContext.userTypes,
+            productDescription: productContext.productDescription,
+            mission: productContext.mission,
+            persona: productContext.persona,
+            strategy: productContext.strategy,
+            northStar: productContext.northStar,
+            objectives: productContext.objectives,
+            acFormat: productContext.acFormat || 'plain',
+          },
+          history: [],
+          storyDraft: { title: '', asA: '', iWant: '', soThat: '', description: '', acceptanceCriteria: [], metadata: { project: '', epic: '', priority: 'Medium', estimate: '' } },
+        });
+        // Try to parse suggestions from the agent response
+        let suggestions: { label: string }[] = [];
+        try {
+          const parsed = JSON.parse(response.message);
+          if (Array.isArray(parsed)) {
+            suggestions = parsed.slice(0, 4).map((s: string) => ({ label: s }));
+          }
+        } catch {
+          // If agent didn't return JSON, use response options or fallback
+          suggestions = response.options || [{ label: '✏️ Describe your story idea' }];
+        }
+        suggestions.push({ label: '✏️ Something else' });
+        addMessage({ id: String(Date.now() + 1), role: 'assistant', content: `Fresh start! Here are some story ideas for **${productContext.productName}**:`, options: suggestions });
+      } catch {
+        addMessage({ id: String(Date.now() + 1), role: 'assistant', content: 'Fresh start! What user story would you like to draft?', options: [{ label: '✏️ Describe your story idea' }] });
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 

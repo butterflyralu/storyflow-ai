@@ -31,6 +31,7 @@ export function AppSidebar() {
   const {
     contextId, setStep,
     setChatHistory, setDbSessionId, dbSessionId,
+    sidebarRefreshKey,
   } = useWizard();
   const { loadSessions, loadMessages } = usePersistedChat();
 
@@ -46,7 +47,7 @@ export function AppSidebar() {
     setLoadingSessions(false);
   }, [contextId, loadSessions]);
 
-  useEffect(() => { refreshSessions(); }, [contextId]);
+  useEffect(() => { refreshSessions(); }, [contextId, sidebarRefreshKey]);
 
   const handleSelectSession = async (session: SavedSession) => {
     setDbSessionId(session.id);

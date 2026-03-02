@@ -22,6 +22,7 @@ interface WizardState {
   activeSplitIndex: number;
   epicSummary: string | null;
   pendingSplitStories: StoryDraft[];
+  sidebarRefreshKey: number;
 }
 
 interface WizardActions {
@@ -45,6 +46,7 @@ interface WizardActions {
   setPendingSplitStories: (stories: StoryDraft[]) => void;
   confirmSplitStories: (indices: number[]) => void;
   clearPendingSplit: () => void;
+  triggerSidebarRefresh: () => void;
 }
 
 const WizardContext = createContext<(WizardState & WizardActions) | null>(null);
@@ -63,6 +65,11 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
   const [activeSplitIndex, setActiveSplitIndex] = useState(0);
   const [epicSummary, setEpicSummary] = useState<string | null>(null);
   const [pendingSplitStories, setPendingSplitStoriesState] = useState<StoryDraft[]>([]);
+  const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+
+  const triggerSidebarRefresh = useCallback(() => {
+    setSidebarRefreshKey(prev => prev + 1);
+  }, []);
 
   const updateStory = useCallback((update: Partial<StoryDraft>) => {
     setStoryState(prev => ({ ...prev, ...update }));
@@ -150,6 +157,7 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
         removeSplitStory,
         pendingSplitStories, setPendingSplitStories,
         confirmSplitStories, clearPendingSplit,
+        sidebarRefreshKey, triggerSidebarRefresh,
       }}
     >
       {children}
