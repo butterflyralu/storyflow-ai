@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import logo from '@/assets/logo.jpeg';
 
 export default function Auth() {
@@ -149,6 +150,14 @@ export default function Auth() {
               {isSignUp ? 'Sign In' : 'Sign Up'}
             </button>
           </p>
+
+          <Link
+            to="/faq"
+            className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Security & Privacy FAQ
+          </Link>
         </CardContent>
       </Card>
     </div>
