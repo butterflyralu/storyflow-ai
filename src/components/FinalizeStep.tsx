@@ -5,17 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Save, RotateCcw, Check } from 'lucide-react';
+import { useStorySaver } from '@/hooks/useStorySaver';
 
 export function FinalizeStep() {
-  const { story, updateStory, saveStory, resetStory } = useWizard();
+  const { story, updateStory, saveStory, resetStory, contextId, dbSessionId, evaluation } = useWizard();
   const [saving, setSaving] = useState(false);
+  const { saveGeneratedStory } = useStorySaver();
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // In mock mode this is instant; when real API is live use api.saveStory()
       await new Promise(r => setTimeout(r, 500));
       saveStory(story);
+      await saveGeneratedStory(story, { contextId, sessionId: dbSessionId, evaluation });
       toast({ title: '✅ Story saved!', description: 'Your user story has been finalized.' });
     } finally {
       setSaving(false);
