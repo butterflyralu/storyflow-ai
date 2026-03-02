@@ -15,7 +15,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Plus, Settings, Loader2 } from 'lucide-react';
+import { MessageSquare, Plus, Settings, Loader2, HelpCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface SavedSession {
@@ -136,16 +137,27 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      {!collapsed && contextId && (
-        <SidebarFooter className="p-3">
+      {!collapsed && (
+        <SidebarFooter className="p-3 space-y-1">
+          {contextId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setStep(3)}
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Edit Context
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
             className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => setStep(3)}
+            onClick={() => window.open('/faq', '_blank')}
           >
-            <Settings className="h-3.5 w-3.5" />
-            Edit Context
+            <HelpCircle className="h-3.5 w-3.5" />
+            Security & Privacy FAQ
           </Button>
         </SidebarFooter>
       )}
