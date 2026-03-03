@@ -90,7 +90,7 @@ export function Wizard() {
                   <ChatPanel />
                 </div>
                 <div className="w-1/2 min-h-0 overflow-y-auto bg-muted/30">
-                  {splitStories.length > 0 ? <SplitStoriesView /> : <div className="p-5"><StoryPreview /></div>}
+                  {splitStories.length > 0 ? <SplitStoriesView /> : <div className="sticky top-0 p-5"><StoryPreview /></div>}
                 </div>
               </div>
             )}
