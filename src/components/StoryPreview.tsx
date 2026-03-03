@@ -222,7 +222,7 @@ export function StoryPreview() {
   };
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-0 shadow-lg">
+    <Card className="flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden border-0 shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Story Draft</CardTitle>
