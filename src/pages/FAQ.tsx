@@ -47,7 +47,7 @@ const faqs = [
     items: [
       {
         q: 'What data does the app store?',
-        a: 'The app stores: your **profile** (display name, avatar URL), your **product context** (product name, industry, personas, etc.), your **chat sessions** (conversation history with the AI), and **message content** (your messages and AI responses). Story drafts exist in-memory during a session and are preserved within chat history.',
+        a: 'The app stores: your **profile** (display name, avatar URL), your **product context** (product name, industry, personas, etc.), your **chat sessions** (conversation history with the AI), **generated user stories** (title, description, acceptance criteria, and evaluation results), and **epics** (parent stories with links to their child stories from splits). All data is tied to your authenticated account.',
       },
       {
         q: 'Who can see my data?',
