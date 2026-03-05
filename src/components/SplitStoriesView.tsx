@@ -8,6 +8,7 @@ import { ArrowLeft, Save, Trash2, X, Check, ClipboardCheck, Loader2 } from 'luci
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 import { cn } from '@/lib/utils';
+import { useStorySaver } from '@/hooks/useStorySaver';
 import type { StoryDraft, EvaluateResponse } from '@/services/types';
 
 function StoryCard({
@@ -235,8 +236,11 @@ export function SplitStoriesView() {
     story: originalStory,
     sessionId,
     contextId,
+    dbSessionId,
+    triggerSidebarRefresh,
   } = useWizard();
 
+  const { saveEpicWithStories } = useStorySaver();
   const [saving, setSaving] = useState(false);
   const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set());
 
@@ -250,14 +254,26 @@ export function SplitStoriesView() {
 
   const handleSaveAll = async () => {
     setSaving(true);
-    splitStories.forEach((s, i) => {
-      if (!savedIndices.has(i)) {
-        saveStory(s);
+    try {
+      const result = await saveEpicWithStories(originalStory, splitStories, {
+        contextId,
+        sessionId: dbSessionId,
+      });
+      if (result) {
+        toast({ title: '✅ Epic & stories saved!', description: `Epic with ${result.storyIds.length} stories saved to database.` });
+      } else {
+        // Fallback to local save
+        splitStories.forEach((s, i) => {
+          if (!savedIndices.has(i)) saveStory(s);
+        });
+        toast({ title: '✅ Stories saved locally', description: `${splitStories.length} stories saved.` });
       }
-    });
-    await new Promise(r => setTimeout(r, 400));
+    } catch (e) {
+      console.error('Epic save error:', e);
+      toast({ title: 'Save failed', description: 'Could not save to database.', variant: 'destructive' });
+    }
     setSaving(false);
-    toast({ title: '✅ All stories saved!', description: `${splitStories.length} stories have been saved.` });
+    triggerSidebarRefresh();
     addMessage({
       id: String(Date.now()),
       role: 'assistant',
