@@ -87,6 +87,60 @@ export type Database = {
           },
         ]
       }
+      epics: {
+        Row: {
+          context_id: string | null
+          created_at: string
+          description: string
+          id: string
+          original_as_a: string
+          original_i_want: string
+          original_so_that: string
+          session_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          context_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          original_as_a?: string
+          original_i_want?: string
+          original_so_that?: string
+          session_id?: string | null
+          title?: string
+          user_id: string
+        }
+        Update: {
+          context_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          original_as_a?: string
+          original_i_want?: string
+          original_so_that?: string
+          session_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epics_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epics_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_stories: {
         Row: {
           acceptance_criteria: Json
@@ -94,6 +148,7 @@ export type Database = {
           context_id: string | null
           created_at: string
           description: string
+          epic_id: string | null
           evaluation_improved_story: Json | null
           evaluation_learning_insight: Json | null
           evaluation_result: string | null
@@ -113,6 +168,7 @@ export type Database = {
           context_id?: string | null
           created_at?: string
           description?: string
+          epic_id?: string | null
           evaluation_improved_story?: Json | null
           evaluation_learning_insight?: Json | null
           evaluation_result?: string | null
@@ -132,6 +188,7 @@ export type Database = {
           context_id?: string | null
           created_at?: string
           description?: string
+          epic_id?: string | null
           evaluation_improved_story?: Json | null
           evaluation_learning_insight?: Json | null
           evaluation_result?: string | null
@@ -151,6 +208,13 @@ export type Database = {
             columns: ["context_id"]
             isOneToOne: false
             referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_stories_epic_id_fkey"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
             referencedColumns: ["id"]
           },
           {

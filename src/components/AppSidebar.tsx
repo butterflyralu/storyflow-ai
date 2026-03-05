@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { usePersistedChat } from '@/hooks/usePersistedChat';
+import { useStorySaver } from '@/hooks/useStorySaver';
 import type { UIChatMessage } from '@/types/wizard';
 import {
   Sidebar,
@@ -15,16 +16,25 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Plus, Settings, Loader2, HelpCircle, BarChart3 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { MessageSquare, Plus, Settings, Loader2, HelpCircle, BarChart3, ChevronDown, Layers, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { Badge } from '@/components/ui/badge';
 
 interface SavedSession {
   id: string;
   title: string;
   created_at: string;
   updated_at: string;
+}
+
+interface EpicWithStories {
+  id: string;
+  title: string;
+  created_at: string;
+  stories: Array<{ id: string; title: string; created_at: string }>;
 }
 
 export function AppSidebar() {
@@ -38,9 +48,12 @@ export function AppSidebar() {
     sidebarRefreshKey,
   } = useWizard();
   const { loadSessions, loadMessages } = usePersistedChat();
+  const { getEpicsWithStories } = useStorySaver();
 
   const [sessions, setSessions] = useState<SavedSession[]>([]);
+  const [epics, setEpics] = useState<EpicWithStories[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [loadingEpics, setLoadingEpics] = useState(false);
 
   // Load sessions for current context
   const refreshSessions = useCallback(async () => {
@@ -51,7 +64,19 @@ export function AppSidebar() {
     setLoadingSessions(false);
   }, [contextId, loadSessions]);
 
-  useEffect(() => { refreshSessions(); }, [contextId, sidebarRefreshKey]);
+  // Load epics for current context
+  const refreshEpics = useCallback(async () => {
+    if (!contextId) { setEpics([]); return; }
+    setLoadingEpics(true);
+    const data = await getEpicsWithStories(contextId);
+    setEpics(data);
+    setLoadingEpics(false);
+  }, [contextId, getEpicsWithStories]);
+
+  useEffect(() => {
+    refreshSessions();
+    refreshEpics();
+  }, [contextId, sidebarRefreshKey]);
 
   const handleSelectSession = async (session: SavedSession) => {
     setDbSessionId(session.id);
@@ -131,6 +156,65 @@ export function AppSidebar() {
                           </div>
                         )}
                       </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Epics */}
+        {contextId && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center px-3">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {!collapsed && <Layers className="h-3.5 w-3.5" />}
+                {collapsed ? <Layers className="h-4 w-4" /> : 'Epics'}
+              </span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {loadingEpics ? (
+                  <div className="flex justify-center py-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : epics.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    {collapsed ? '' : 'No epics yet'}
+                  </div>
+                ) : (
+                  epics.map(epic => (
+                    <SidebarMenuItem key={epic.id}>
+                      {collapsed ? (
+                        <SidebarMenuButton tooltip={`${epic.title} (${epic.stories.length} stories)`}>
+                          <Layers className="h-3.5 w-3.5" />
+                        </SidebarMenuButton>
+                      ) : (
+                        <Collapsible>
+                          <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors">
+                            <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform [&[data-state=open]]:rotate-180" />
+                            <Layers className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                            <span className="truncate flex-1 text-left">{epic.title}</span>
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
+                              {epic.stories.length}
+                            </Badge>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="ml-5 border-l border-border pl-2 space-y-0.5 py-1">
+                              {epic.stories.map(story => (
+                                <div
+                                  key={story.id}
+                                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 transition-colors"
+                                >
+                                  <FileText className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">{story.title}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
                     </SidebarMenuItem>
                   ))
                 )}
