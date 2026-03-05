@@ -50,6 +50,10 @@ const faqs = [
         a: 'The app stores: your **profile** (display name, avatar URL), your **product context** (product name, industry, personas, etc.), your **chat sessions** (conversation history with the AI), **generated user stories** (title, description, acceptance criteria, and evaluation results), and **epics** (parent stories with links to their child stories from splits). All data is tied to your authenticated account.',
       },
       {
+        q: 'How does epic splitting work?',
+        a: 'When the AI evaluates a story and determines it\'s too large (a "likely epic"), it offers to **split it into smaller, independent user stories**. You discuss the proposed split in the chat — dropping, merging, or refining sub-stories — then confirm. The confirmed stories appear as **swipeable cards** you can edit, evaluate, and save individually. When you save, an **epic record** is created in the database with the original story details, and each child story is linked to it via a parent-child relationship. You can see your epics and their child stories grouped in the sidebar.',
+      },
+      {
         q: 'Who can see my data?',
         a: 'Only **you**. All database tables are protected by Row-Level Security (RLS) policies, which means every query is filtered by your authenticated user ID. No other user — including other testers — can access your data.',
       },
