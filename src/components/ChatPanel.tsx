@@ -262,7 +262,7 @@ export function ChatPanel() {
 
   return (
     <div className="flex h-full flex-col bg-card/50">
-      <ScrollArea className="flex-1 px-5 py-5">
+      <ScrollArea className="flex-1 px-5 py-5 overscroll-y-contain">
         <div className="space-y-4">
           {chatHistory.map(msg => (
             <div

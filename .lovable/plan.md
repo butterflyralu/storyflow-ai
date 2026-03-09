@@ -1,45 +1,33 @@
 
-Goal: make chat and User Story panel scroll independently so the right panel no longer moves when chat scrolls/auto-scrolls.
 
-1) Root cause (from current layout)
-- Step 2 has nested scroll regions:
-  - Left: `ChatPanel` (`ScrollArea`)
-  - Right: container itself has `overflow-y-auto`
-  - Inside right: `StoryPreview` also has `CardContent overflow-y-auto`
-- This creates scroll chaining and “linked” movement (especially with wheel momentum + `scrollIntoView` in chat).
+## Plan: Add Logo and Adapt Styling to Blue Gradient Theme
 
-2) Layout isolation changes (UI only, no backend/db)
-- File: `src/components/Wizard.tsx`
-- In step 2 split layout:
-  - Keep the split container as a fixed-height flex region (`h-full min-h-0 overflow-hidden`).
-  - Left panel: keep `overflow-hidden min-h-0`.
-  - Right panel: change from `overflow-y-auto` to `overflow-hidden min-h-0` so it is NOT an independent outer scroller.
-  - Wrap non-split preview in a full-height padded container (not sticky) so only inner StoryPreview content scrolls.
-- Also harden top-level shell from `min-h-screen` to `h-screen overflow-hidden` so document/page scroll does not participate.
+The uploaded image is a blue-gradient logo for StoryFlow AI. Two things to do: use it as favicon + header logo, and shift the color palette from purple to blue to match.
 
-3) Prevent scroll chaining explicitly
-- File: `src/components/ChatPanel.tsx`
-  - Add `overscroll-y-contain` to chat scroll region (and/or chat root).
-- File: `src/components/StoryPreview.tsx`
-  - Keep `CardContent` as the single right-side scroll surface and add `overscroll-y-contain`.
-- Result: wheel/touch scroll energy won’t propagate from chat into sibling/potential parent containers.
+### Steps
 
-4) Keep split-story mode behavior stable
-- File: `src/components/SplitStoriesView.tsx`
-  - Verify container remains `h-full flex-col`.
-  - Ensure only card bodies scroll (`CardContent overflow-y-auto`) and outer split view remains `overflow-hidden`.
-  - No functional logic changes.
+1. **Copy logo to public directory** — Copy `user-uploads://storyflowAI.jpeg` to `public/logo.jpeg` for favicon and to `src/assets/logo.jpeg` for component use
 
-5) Verification checklist (manual)
-- In step 2 (single story):
-  - Scroll chat rapidly: right story panel must stay visually fixed.
-  - Scroll story content: chat should not move.
-  - Send messages (auto-scroll): right panel should not jump.
-- In split view:
-  - Carousel navigation + per-card scrolling still works.
-  - Save/discard bars remain visible and stable.
-- Test on desktop + one mobile viewport to confirm no regression.
+2. **Update `index.html`** — Add favicon link pointing to `/logo.jpeg`
 
-Implementation scope summary:
-- Frontend class/layout adjustments only.
-- No API, auth, database, or migration changes required.
+3. **Update `src/components/Wizard.tsx`** — Replace the "S" placeholder div with an `<img>` tag using the imported logo asset
+
+4. **Update `src/index.css`** — Shift the color palette from purple (258°) to blue (210-220°) to match the logo's gradient:
+   - `--primary`: purple → blue (e.g., `210 80% 50%`)
+   - `--accent`: purple-tinted → blue-tinted
+   - `--ring`: match primary
+   - All `--purple`, `--violet`, `--indigo` custom vars → blue range
+   - `--panel-dark` → dark navy
+   - Both light and dark mode vars updated
+
+5. **Update `tailwind.config.ts`** — No structural changes needed (colors reference CSS vars), but update shadow hue references from `258` to `210`
+
+| File | Change |
+|------|--------|
+| `public/logo.jpeg` | Copy uploaded logo |
+| `src/assets/logo.jpeg` | Copy uploaded logo for imports |
+| `index.html` | Add `<link rel="icon">` |
+| `src/components/Wizard.tsx` | Replace placeholder with logo image |
+| `src/index.css` | Shift palette from purple to blue |
+| `tailwind.config.ts` | Update shadow hue values |
+
