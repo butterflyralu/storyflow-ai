@@ -89,8 +89,8 @@ export function Wizard() {
                 <div className="flex w-1/2 flex-col border-r border-border min-h-0 overflow-hidden">
                   <ChatPanel />
                 </div>
-                <div className="w-1/2 min-h-0 overflow-y-auto bg-muted/30">
-                  {splitStories.length > 0 ? <SplitStoriesView /> : <div className="sticky top-0 p-5"><StoryPreview /></div>}
+                <div className="w-1/2 min-h-0 overflow-hidden bg-muted/30">
+                  {splitStories.length > 0 ? <SplitStoriesView /> : <div className="h-full overflow-y-auto overscroll-y-contain p-5"><StoryPreview /></div>}
                 </div>
               </div>
             )}
