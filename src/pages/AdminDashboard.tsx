@@ -202,7 +202,26 @@ export default function AdminDashboard() {
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   }, [filteredLogs]);
 
-  // (helpers moved above early return)
+  if (!isAdmin) return <Navigate to="/" replace />;
+
+  const totalStories = stories.length;
+  const evaluated = stories.filter(s => s.evaluation_result);
+  const passed = evaluated.filter(s => s.evaluation_result === 'PASS');
+  const passRate = evaluated.length > 0 ? Math.round((passed.length / evaluated.length) * 100) : 0;
+  const uniqueUsers = new Set(stories.map(s => s.user_id)).size;
+  const epics = stories.filter(s => s.is_likely_epic).length;
+
+  const scorecardStats: Record<string, { pass: number; fail: number }> = {};
+  evaluated.forEach(s => {
+    if (Array.isArray(s.evaluation_scorecard)) {
+      s.evaluation_scorecard.forEach((item: any) => {
+        const key = `${item.framework}: ${item.criterion}`;
+        if (!scorecardStats[key]) scorecardStats[key] = { pass: 0, fail: 0 };
+        if (item.result === 'PASS') scorecardStats[key].pass++;
+        else scorecardStats[key].fail++;
+      });
+    }
+  });
 
   return (
     <div className="min-h-screen bg-background p-6 max-w-7xl mx-auto">
