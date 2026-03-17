@@ -1,10 +1,51 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Gemini 2.5 Flash pricing per 1M tokens
+const COST_PER_1M_INPUT = 0.15;
+const COST_PER_1M_OUTPUT = 0.60;
+
+function estimateCost(promptTokens: number, completionTokens: number): number {
+  return (promptTokens / 1_000_000) * COST_PER_1M_INPUT + (completionTokens / 1_000_000) * COST_PER_1M_OUTPUT;
+}
+
+function getUserIdFromJwt(authHeader: string | null): string | null {
+  if (!authHeader) return null;
+  try {
+    const token = authHeader.replace("Bearer ", "");
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.sub || null;
+  } catch { return null; }
+}
+
+async function logUsage(req: Request, functionName: string, model: string, usage: any) {
+  try {
+    const userId = getUserIdFromJwt(req.headers.get("authorization"));
+    if (!userId || !usage) return;
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: req.headers.get("authorization")! } } }
+    );
+    await supabase.from("api_usage_logs").insert({
+      user_id: userId,
+      function_name: functionName,
+      model,
+      prompt_tokens: usage.prompt_tokens || 0,
+      completion_tokens: usage.completion_tokens || 0,
+      total_tokens: usage.total_tokens || 0,
+      estimated_cost_usd: estimateCost(usage.prompt_tokens || 0, usage.completion_tokens || 0),
+    });
+  } catch (e) {
+    console.error("Usage logging error:", e);
+  }
+}
 
 const SYSTEM_PROMPT = `You are a Product Owner assistant that helps draft user stories through conversation. You guide the user step-by-step from a rough idea to a complete, evaluation-ready user story.
 
