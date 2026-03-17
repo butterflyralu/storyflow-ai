@@ -29,10 +29,17 @@ serve(async (req) => {
   try {
     const { story, agentContext } = await req.json();
 
+    const GOOGLE_GEMINI_API_KEY = Deno.env.get("GOOGLE_GEMINI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const apiKey = GOOGLE_GEMINI_API_KEY || LOVABLE_API_KEY;
+    if (!apiKey) {
+      throw new Error("No AI API key configured (GOOGLE_GEMINI_API_KEY or LOVABLE_API_KEY)");
     }
+    const useGoogleDirect = !!GOOGLE_GEMINI_API_KEY;
+    const aiUrl = useGoogleDirect
+      ? "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const aiModel = useGoogleDirect ? "gemini-2.5-flash" : "google/gemini-3-flash-preview";
 
     const contextStr = agentContext
       ? `\n\nProduct Context:\n- Product Name: ${agentContext.productName || "Not set"}\n- Mission: ${agentContext.mission || "Not set"}\n- Persona: ${agentContext.persona || "Not set"}\n- Strategy: ${agentContext.strategy || "Not set"}\n- North Star: ${agentContext.northStar || "Not set"}\n- Objectives: ${agentContext.objectives || "Not set"}`
@@ -98,15 +105,15 @@ serve(async (req) => {
     };
 
     const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      aiUrl,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: aiModel,
           messages: [
             { role: "system", content: SYSTEM_PROMPT + contextStr + storyStr },
             { role: "user", content: "Split this epic into 3-6 independent user stories." },

@@ -108,10 +108,17 @@ serve(async (req) => {
   try {
     const { message, agentContext, history, storyDraft } = await req.json();
 
+    const GOOGLE_GEMINI_API_KEY = Deno.env.get("GOOGLE_GEMINI_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const apiKey = GOOGLE_GEMINI_API_KEY || LOVABLE_API_KEY;
+    if (!apiKey) {
+      throw new Error("No AI API key configured (GOOGLE_GEMINI_API_KEY or LOVABLE_API_KEY)");
     }
+    const useGoogleDirect = !!GOOGLE_GEMINI_API_KEY;
+    const aiUrl = useGoogleDirect
+      ? "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const aiModel = useGoogleDirect ? "gemini-2.5-flash" : "google/gemini-3-flash-preview";
 
     // Build context string
     const acFormat = agentContext?.acFormat || "plain";
@@ -223,15 +230,15 @@ serve(async (req) => {
     };
 
     const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      aiUrl,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: aiModel,
           messages,
           tools: [toolDef],
           tool_choice: {
