@@ -113,28 +113,6 @@ export default function AdminDashboard() {
   const formatCost = (c: number) => `$${c.toFixed(4)}`;
   const formatTokens = (t: number) => t >= 1_000_000 ? `${(t / 1_000_000).toFixed(1)}M` : t >= 1_000 ? `${(t / 1_000).toFixed(1)}K` : String(t);
 
-  if (!isAdmin) return <Navigate to="/" replace />;
-
-  const totalStories = stories.length;
-  const evaluated = stories.filter(s => s.evaluation_result);
-  const passed = evaluated.filter(s => s.evaluation_result === 'PASS');
-  const passRate = evaluated.length > 0 ? Math.round((passed.length / evaluated.length) * 100) : 0;
-  const uniqueUsers = new Set(stories.map(s => s.user_id)).size;
-  const epics = stories.filter(s => s.is_likely_epic).length;
-
-  // Scorecard aggregation
-  const scorecardStats: Record<string, { pass: number; fail: number }> = {};
-  evaluated.forEach(s => {
-    if (Array.isArray(s.evaluation_scorecard)) {
-      s.evaluation_scorecard.forEach((item: any) => {
-        const key = `${item.framework}: ${item.criterion}`;
-        if (!scorecardStats[key]) scorecardStats[key] = { pass: 0, fail: 0 };
-        if (item.result === 'PASS') scorecardStats[key].pass++;
-        else scorecardStats[key].fail++;
-      });
-    }
-  });
-
   // Time period filtering
   const now = new Date();
   const periodStart = useMemo(() => {
