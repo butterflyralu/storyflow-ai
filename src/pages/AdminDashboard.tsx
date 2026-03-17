@@ -65,6 +65,7 @@ export default function AdminDashboard() {
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
   const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<'week' | 'month'>('week');
 
   useEffect(() => {
     if (!isAdmin) return;
