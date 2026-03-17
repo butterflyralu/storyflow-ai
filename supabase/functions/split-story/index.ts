@@ -201,6 +201,8 @@ serve(async (req) => {
 
     const parsed = JSON.parse(toolCall.function.arguments);
 
+    logUsage(req, "split-story", aiModel, data.usage);
+
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

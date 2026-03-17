@@ -251,6 +251,8 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
       parsed.improvedStory.metadata = story.metadata || { project: "", epic: "", priority: "Medium", estimate: "" };
     }
 
+    logUsage(req, "evaluate-story", aiModel, data.usage);
+
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
