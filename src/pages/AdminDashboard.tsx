@@ -422,6 +422,23 @@ export default function AdminDashboard() {
 
           {/* Usage Tab */}
           <TabsContent value="usage" className="space-y-6">
+            {/* Time Period Filter */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>Showing data for the last {timePeriod === 'week' ? '7 days' : '30 days'}</span>
+              </div>
+              <Select value={timePeriod} onValueChange={(v) => setTimePeriod(v as 'week' | 'month')}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Usage Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
@@ -430,7 +447,7 @@ export default function AdminDashboard() {
                     <Zap className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{totalApiCalls}</p>
-                      <p className="text-xs text-muted-foreground">Total API Calls</p>
+                      <p className="text-xs text-muted-foreground">API Calls</p>
                     </div>
                   </div>
                 </CardContent>
@@ -438,10 +455,10 @@ export default function AdminDashboard() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
-                    <Activity className="h-8 w-8 text-blue-500" />
+                    <Activity className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{formatTokens(totalTokensAll)}</p>
-                      <p className="text-xs text-muted-foreground">Total Tokens</p>
+                      <p className="text-xs text-muted-foreground">Tokens Used</p>
                     </div>
                   </div>
                 </CardContent>
@@ -449,10 +466,10 @@ export default function AdminDashboard() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
-                    <DollarSign className="h-8 w-8 text-green-500" />
+                    <DollarSign className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{formatCost(totalCostAll)}</p>
-                      <p className="text-xs text-muted-foreground">Estimated Total Cost</p>
+                      <p className="text-xs text-muted-foreground">Actual Cost</p>
                     </div>
                   </div>
                 </CardContent>
@@ -460,24 +477,53 @@ export default function AdminDashboard() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
-                    <Users className="h-8 w-8 text-orange-500" />
+                    <Users className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{userUsageSummaries.length}</p>
-                      <p className="text-xs text-muted-foreground">Users with Usage</p>
+                      <p className="text-xs text-muted-foreground">Active Users</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
+            {/* Budget Forecast */}
+            <Card className="border-primary/30 bg-primary/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ArrowUpRight className="h-5 w-5 text-primary" />
+                  Budget Forecast
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Daily Avg Cost</p>
+                    <p className="text-xl font-bold">{formatCost(forecast.dailyRate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Projected Weekly</p>
+                    <p className="text-xl font-bold">{formatCost(forecast.weeklyForecast)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Projected Monthly</p>
+                    <p className="text-xl font-bold">{formatCost(forecast.monthlyForecast)}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 italic">
+                  Forecast extrapolated from average daily usage in the selected period.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Per-User Usage Table */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Usage Per User</CardTitle>
+                <CardTitle className="text-lg">Usage Per User ({timePeriod === 'week' ? 'This Week' : 'This Month'})</CardTitle>
               </CardHeader>
               <CardContent>
                 {userUsageSummaries.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4">No usage data yet. Usage will appear after users interact with the AI agent.</p>
+                  <p className="text-sm text-muted-foreground py-4">No usage data for this period.</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -517,10 +563,10 @@ export default function AdminDashboard() {
                           <td className="py-3 pr-4">Total</td>
                           <td className="py-3 pr-4 text-right tabular-nums">{totalApiCalls}</td>
                           <td className="py-3 pr-4 text-right tabular-nums">
-                            {formatTokens(usageLogs.reduce((s, l) => s + l.prompt_tokens, 0))}
+                            {formatTokens(filteredLogs.reduce((s, l) => s + l.prompt_tokens, 0))}
                           </td>
                           <td className="py-3 pr-4 text-right tabular-nums">
-                            {formatTokens(usageLogs.reduce((s, l) => s + l.completion_tokens, 0))}
+                            {formatTokens(filteredLogs.reduce((s, l) => s + l.completion_tokens, 0))}
                           </td>
                           <td className="py-3 pr-4 text-right tabular-nums">{formatTokens(totalTokensAll)}</td>
                           <td className="py-3 text-right tabular-nums">{formatCost(totalCostAll)}</td>
@@ -532,16 +578,16 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Daily Usage */}
-            {sortedDays.length > 0 && (
+            {/* Daily Usage Chart */}
+            {groupedUsage.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Daily Usage (Last 30 Days)</CardTitle>
+                  <CardTitle className="text-lg">Daily Usage ({timePeriod === 'week' ? 'Last 7 Days' : 'Last 30 Days'})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-1">
-                    {sortedDays.map(([day, stats]) => {
-                      const maxCost = Math.max(...sortedDays.map(([, s]) => s.cost));
+                    {groupedUsage.map(([day, stats]) => {
+                      const maxCost = Math.max(...groupedUsage.map(([, s]) => s.cost));
                       const barWidth = maxCost > 0 ? (stats.cost / maxCost) * 100 : 0;
                       return (
                         <div key={day} className="flex items-center gap-3 text-sm">
