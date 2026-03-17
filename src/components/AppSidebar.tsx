@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useWizard } from '@/context/WizardContext';
 import { usePersistedChat } from '@/hooks/usePersistedChat';
 import { useStorySaver } from '@/hooks/useStorySaver';
