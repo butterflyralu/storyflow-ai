@@ -230,15 +230,15 @@ serve(async (req) => {
     };
 
     const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      aiUrl,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: aiModel,
           messages,
           tools: [toolDef],
           tool_choice: {
