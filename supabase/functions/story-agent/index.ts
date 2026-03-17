@@ -327,6 +327,9 @@ serve(async (req) => {
 
     const parsed = JSON.parse(toolCall.function.arguments);
 
+    // Log usage asynchronously (don't block response)
+    logUsage(req, "story-agent", aiModel, data.usage);
+
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
