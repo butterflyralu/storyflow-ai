@@ -45,7 +45,7 @@ export function AppSidebar() {
   const {
     contextId, setStep,
     setChatHistory, setDbSessionId, dbSessionId,
-    sidebarRefreshKey,
+    sidebarRefreshKey, setStory, setEvaluation,
   } = useWizard();
   const { loadSessions, loadMessages } = usePersistedChat();
   const { getEpicsWithStories } = useStorySaver();
