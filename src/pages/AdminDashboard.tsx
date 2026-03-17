@@ -130,14 +130,51 @@ export default function AdminDashboard() {
     }
   });
 
-  // Usage aggregation
-  const totalApiCalls = usageLogs.length;
-  const totalTokensAll = usageLogs.reduce((sum, l) => sum + l.total_tokens, 0);
-  const totalCostAll = usageLogs.reduce((sum, l) => sum + Number(l.estimated_cost_usd), 0);
+  // Time period filtering
+  const now = new Date();
+  const periodStart = useMemo(() => {
+    const d = new Date(now);
+    if (timePeriod === 'week') {
+      d.setDate(d.getDate() - 7);
+    } else {
+      d.setDate(d.getDate() - 30);
+    }
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [timePeriod]);
 
-  const userUsageSummaries: UserUsageSummary[] = (() => {
+  const filteredLogs = useMemo(() =>
+    usageLogs.filter(l => new Date(l.created_at) >= periodStart),
+    [usageLogs, periodStart]
+  );
+
+  // Usage aggregation on filtered logs
+  const totalApiCalls = filteredLogs.length;
+  const totalTokensAll = filteredLogs.reduce((sum, l) => sum + l.total_tokens, 0);
+  const totalCostAll = filteredLogs.reduce((sum, l) => sum + Number(l.estimated_cost_usd), 0);
+
+  // Budget forecast: extrapolate current period usage
+  const forecast = useMemo(() => {
+    const periodDays = timePeriod === 'week' ? 7 : 30;
+    const elapsed = Math.max(1, Math.ceil((now.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)));
+    const dailyRate = totalCostAll / elapsed;
+    const dailyTokenRate = totalTokensAll / elapsed;
+    const dailyCallRate = totalApiCalls / elapsed;
+
+    const projectedCost = dailyRate * periodDays;
+    const projectedTokens = dailyTokenRate * periodDays;
+    const projectedCalls = Math.round(dailyCallRate * periodDays);
+
+    // Also compute weekly and monthly projections
+    const weeklyForecast = dailyRate * 7;
+    const monthlyForecast = dailyRate * 30;
+
+    return { projectedCost, projectedTokens, projectedCalls, weeklyForecast, monthlyForecast, dailyRate };
+  }, [totalCostAll, totalTokensAll, totalApiCalls, periodStart, timePeriod]);
+
+  const userUsageSummaries: UserUsageSummary[] = useMemo(() => {
     const map: Record<string, UserUsageSummary> = {};
-    usageLogs.forEach(log => {
+    filteredLogs.forEach(log => {
       if (!map[log.user_id]) {
         map[log.user_id] = {
           userId: log.user_id,
@@ -163,23 +200,24 @@ export default function AdminDashboard() {
       u.byFunction[log.function_name].tokens += log.total_tokens;
       u.byFunction[log.function_name].cost += Number(log.estimated_cost_usd);
     });
-    // Update display names (profiles might have loaded after initial map creation)
     Object.values(map).forEach(u => {
       u.displayName = profiles[u.userId]?.display_name || u.userId.slice(0, 8);
     });
     return Object.values(map).sort((a, b) => b.estimatedCost - a.estimatedCost);
-  })();
+  }, [filteredLogs, profiles]);
 
-  // Daily usage for last 30 days
-  const dailyUsage: Record<string, { calls: number; tokens: number; cost: number }> = {};
-  usageLogs.forEach(log => {
-    const day = log.created_at.slice(0, 10);
-    if (!dailyUsage[day]) dailyUsage[day] = { calls: 0, tokens: 0, cost: 0 };
-    dailyUsage[day].calls++;
-    dailyUsage[day].tokens += log.total_tokens;
-    dailyUsage[day].cost += Number(log.estimated_cost_usd);
-  });
-  const sortedDays = Object.entries(dailyUsage).sort(([a], [b]) => b.localeCompare(a)).slice(0, 30);
+  // Group usage by day/week for the chart
+  const groupedUsage = useMemo(() => {
+    const groups: Record<string, { calls: number; tokens: number; cost: number }> = {};
+    filteredLogs.forEach(log => {
+      const day = log.created_at.slice(0, 10);
+      if (!groups[day]) groups[day] = { calls: 0, tokens: 0, cost: 0 };
+      groups[day].calls++;
+      groups[day].tokens += log.total_tokens;
+      groups[day].cost += Number(log.estimated_cost_usd);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredLogs]);
 
   const getUserName = (userId: string) => profiles[userId]?.display_name || userId.slice(0, 8);
   const formatDate = (d: string) => new Date(d).toLocaleString();
