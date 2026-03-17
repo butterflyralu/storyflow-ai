@@ -82,6 +82,48 @@ export function AppSidebar() {
     setDbSessionId(session.id);
     const msgs = await loadMessages(session.id);
     setChatHistory(msgs);
+
+    // Restore story draft from generated_stories for this session
+    try {
+      const { data } = await supabase
+        .from('generated_stories')
+        .select('*')
+        .eq('session_id', session.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) {
+        const s = data[0] as any;
+        setStory({
+          title: s.title || '',
+          asA: s.as_a || '',
+          iWant: s.i_want || '',
+          soThat: s.so_that || '',
+          description: s.description || '',
+          acceptanceCriteria: s.acceptance_criteria || [],
+          metadata: s.metadata || { project: '', epic: '', priority: '', estimate: '' },
+        });
+        if (s.evaluation_result) {
+          setEvaluation({
+            overallResult: s.evaluation_result,
+            scorecard: s.evaluation_scorecard || [],
+            improvedStory: s.evaluation_improved_story || null,
+            learningInsight: s.evaluation_learning_insight || null,
+            newChecklistRule: null,
+            isLikelyEpic: s.is_likely_epic || false,
+          });
+        } else {
+          setEvaluation(null);
+        }
+      } else {
+        setStory({ title: '', asA: '', iWant: '', soThat: '', description: '', acceptanceCriteria: [], metadata: { project: '', epic: '', priority: '', estimate: '' } });
+        setEvaluation(null);
+      }
+    } catch {
+      // If loading story fails, just clear it
+      setStory({ title: '', asA: '', iWant: '', soThat: '', description: '', acceptanceCriteria: [], metadata: { project: '', epic: '', priority: '', estimate: '' } });
+      setEvaluation(null);
+    }
+
     setStep(2);
   };
 
