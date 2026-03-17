@@ -108,6 +108,11 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  const getUserName = (userId: string) => profiles[userId]?.display_name || userId.slice(0, 8);
+  const formatDate = (d: string) => new Date(d).toLocaleString();
+  const formatCost = (c: number) => `$${c.toFixed(4)}`;
+  const formatTokens = (t: number) => t >= 1_000_000 ? `${(t / 1_000_000).toFixed(1)}M` : t >= 1_000 ? `${(t / 1_000).toFixed(1)}K` : String(t);
+
   if (!isAdmin) return <Navigate to="/" replace />;
 
   const totalStories = stories.length;
