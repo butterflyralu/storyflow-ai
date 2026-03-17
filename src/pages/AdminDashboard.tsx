@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { Navigate } from 'react-router-dom';
@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, CheckCircle, XCircle, BarChart3, Users, FileText, TrendingUp, Zap, DollarSign, Activity } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, CheckCircle, XCircle, BarChart3, Users, FileText, TrendingUp, Zap, DollarSign, Activity, Calendar, ArrowUpRight } from 'lucide-react';
 
 interface GeneratedStory {
   id: string;
@@ -64,6 +65,7 @@ export default function AdminDashboard() {
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
   const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<'week' | 'month'>('week');
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -106,36 +108,56 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  if (!isAdmin) return <Navigate to="/" replace />;
+  const getUserName = (userId: string) => profiles[userId]?.display_name || userId.slice(0, 8);
+  const formatDate = (d: string) => new Date(d).toLocaleString();
+  const formatCost = (c: number) => `$${c.toFixed(4)}`;
+  const formatTokens = (t: number) => t >= 1_000_000 ? `${(t / 1_000_000).toFixed(1)}M` : t >= 1_000 ? `${(t / 1_000).toFixed(1)}K` : String(t);
 
-  const totalStories = stories.length;
-  const evaluated = stories.filter(s => s.evaluation_result);
-  const passed = evaluated.filter(s => s.evaluation_result === 'PASS');
-  const passRate = evaluated.length > 0 ? Math.round((passed.length / evaluated.length) * 100) : 0;
-  const uniqueUsers = new Set(stories.map(s => s.user_id)).size;
-  const epics = stories.filter(s => s.is_likely_epic).length;
-
-  // Scorecard aggregation
-  const scorecardStats: Record<string, { pass: number; fail: number }> = {};
-  evaluated.forEach(s => {
-    if (Array.isArray(s.evaluation_scorecard)) {
-      s.evaluation_scorecard.forEach((item: any) => {
-        const key = `${item.framework}: ${item.criterion}`;
-        if (!scorecardStats[key]) scorecardStats[key] = { pass: 0, fail: 0 };
-        if (item.result === 'PASS') scorecardStats[key].pass++;
-        else scorecardStats[key].fail++;
-      });
+  // Time period filtering
+  const now = new Date();
+  const periodStart = useMemo(() => {
+    const d = new Date(now);
+    if (timePeriod === 'week') {
+      d.setDate(d.getDate() - 7);
+    } else {
+      d.setDate(d.getDate() - 30);
     }
-  });
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [timePeriod]);
 
-  // Usage aggregation
-  const totalApiCalls = usageLogs.length;
-  const totalTokensAll = usageLogs.reduce((sum, l) => sum + l.total_tokens, 0);
-  const totalCostAll = usageLogs.reduce((sum, l) => sum + Number(l.estimated_cost_usd), 0);
+  const filteredLogs = useMemo(() =>
+    usageLogs.filter(l => new Date(l.created_at) >= periodStart),
+    [usageLogs, periodStart]
+  );
 
-  const userUsageSummaries: UserUsageSummary[] = (() => {
+  // Usage aggregation on filtered logs
+  const totalApiCalls = filteredLogs.length;
+  const totalTokensAll = filteredLogs.reduce((sum, l) => sum + l.total_tokens, 0);
+  const totalCostAll = filteredLogs.reduce((sum, l) => sum + Number(l.estimated_cost_usd), 0);
+
+  // Budget forecast: extrapolate current period usage
+  const forecast = useMemo(() => {
+    const periodDays = timePeriod === 'week' ? 7 : 30;
+    const elapsed = Math.max(1, Math.ceil((now.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)));
+    const dailyRate = totalCostAll / elapsed;
+    const dailyTokenRate = totalTokensAll / elapsed;
+    const dailyCallRate = totalApiCalls / elapsed;
+
+    const projectedCost = dailyRate * periodDays;
+    const projectedTokens = dailyTokenRate * periodDays;
+    const projectedCalls = Math.round(dailyCallRate * periodDays);
+
+    // Also compute weekly and monthly projections
+    const weeklyForecast = dailyRate * 7;
+    const monthlyForecast = dailyRate * 30;
+
+    return { projectedCost, projectedTokens, projectedCalls, weeklyForecast, monthlyForecast, dailyRate };
+  }, [totalCostAll, totalTokensAll, totalApiCalls, periodStart, timePeriod]);
+
+  const userUsageSummaries: UserUsageSummary[] = useMemo(() => {
     const map: Record<string, UserUsageSummary> = {};
-    usageLogs.forEach(log => {
+    filteredLogs.forEach(log => {
       if (!map[log.user_id]) {
         map[log.user_id] = {
           userId: log.user_id,
@@ -161,28 +183,45 @@ export default function AdminDashboard() {
       u.byFunction[log.function_name].tokens += log.total_tokens;
       u.byFunction[log.function_name].cost += Number(log.estimated_cost_usd);
     });
-    // Update display names (profiles might have loaded after initial map creation)
     Object.values(map).forEach(u => {
       u.displayName = profiles[u.userId]?.display_name || u.userId.slice(0, 8);
     });
     return Object.values(map).sort((a, b) => b.estimatedCost - a.estimatedCost);
-  })();
+  }, [filteredLogs, profiles]);
 
-  // Daily usage for last 30 days
-  const dailyUsage: Record<string, { calls: number; tokens: number; cost: number }> = {};
-  usageLogs.forEach(log => {
-    const day = log.created_at.slice(0, 10);
-    if (!dailyUsage[day]) dailyUsage[day] = { calls: 0, tokens: 0, cost: 0 };
-    dailyUsage[day].calls++;
-    dailyUsage[day].tokens += log.total_tokens;
-    dailyUsage[day].cost += Number(log.estimated_cost_usd);
+  // Group usage by day/week for the chart
+  const groupedUsage = useMemo(() => {
+    const groups: Record<string, { calls: number; tokens: number; cost: number }> = {};
+    filteredLogs.forEach(log => {
+      const day = log.created_at.slice(0, 10);
+      if (!groups[day]) groups[day] = { calls: 0, tokens: 0, cost: 0 };
+      groups[day].calls++;
+      groups[day].tokens += log.total_tokens;
+      groups[day].cost += Number(log.estimated_cost_usd);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredLogs]);
+
+  if (!isAdmin) return <Navigate to="/" replace />;
+
+  const totalStories = stories.length;
+  const evaluated = stories.filter(s => s.evaluation_result);
+  const passed = evaluated.filter(s => s.evaluation_result === 'PASS');
+  const passRate = evaluated.length > 0 ? Math.round((passed.length / evaluated.length) * 100) : 0;
+  const uniqueUsers = new Set(stories.map(s => s.user_id)).size;
+  const epics = stories.filter(s => s.is_likely_epic).length;
+
+  const scorecardStats: Record<string, { pass: number; fail: number }> = {};
+  evaluated.forEach(s => {
+    if (Array.isArray(s.evaluation_scorecard)) {
+      s.evaluation_scorecard.forEach((item: any) => {
+        const key = `${item.framework}: ${item.criterion}`;
+        if (!scorecardStats[key]) scorecardStats[key] = { pass: 0, fail: 0 };
+        if (item.result === 'PASS') scorecardStats[key].pass++;
+        else scorecardStats[key].fail++;
+      });
+    }
   });
-  const sortedDays = Object.entries(dailyUsage).sort(([a], [b]) => b.localeCompare(a)).slice(0, 30);
-
-  const getUserName = (userId: string) => profiles[userId]?.display_name || userId.slice(0, 8);
-  const formatDate = (d: string) => new Date(d).toLocaleString();
-  const formatCost = (c: number) => `$${c.toFixed(4)}`;
-  const formatTokens = (t: number) => t >= 1_000_000 ? `${(t / 1_000_000).toFixed(1)}M` : t >= 1_000 ? `${(t / 1_000).toFixed(1)}K` : String(t);
 
   return (
     <div className="min-h-screen bg-background p-6 max-w-7xl mx-auto">
@@ -380,6 +419,23 @@ export default function AdminDashboard() {
 
           {/* Usage Tab */}
           <TabsContent value="usage" className="space-y-6">
+            {/* Time Period Filter */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>Showing data for the last {timePeriod === 'week' ? '7 days' : '30 days'}</span>
+              </div>
+              <Select value={timePeriod} onValueChange={(v) => setTimePeriod(v as 'week' | 'month')}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Usage Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
@@ -388,7 +444,7 @@ export default function AdminDashboard() {
                     <Zap className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{totalApiCalls}</p>
-                      <p className="text-xs text-muted-foreground">Total API Calls</p>
+                      <p className="text-xs text-muted-foreground">API Calls</p>
                     </div>
                   </div>
                 </CardContent>
@@ -396,10 +452,10 @@ export default function AdminDashboard() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
-                    <Activity className="h-8 w-8 text-blue-500" />
+                    <Activity className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{formatTokens(totalTokensAll)}</p>
-                      <p className="text-xs text-muted-foreground">Total Tokens</p>
+                      <p className="text-xs text-muted-foreground">Tokens Used</p>
                     </div>
                   </div>
                 </CardContent>
@@ -407,10 +463,10 @@ export default function AdminDashboard() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
-                    <DollarSign className="h-8 w-8 text-green-500" />
+                    <DollarSign className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{formatCost(totalCostAll)}</p>
-                      <p className="text-xs text-muted-foreground">Estimated Total Cost</p>
+                      <p className="text-xs text-muted-foreground">Actual Cost</p>
                     </div>
                   </div>
                 </CardContent>
@@ -418,24 +474,53 @@ export default function AdminDashboard() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
-                    <Users className="h-8 w-8 text-orange-500" />
+                    <Users className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{userUsageSummaries.length}</p>
-                      <p className="text-xs text-muted-foreground">Users with Usage</p>
+                      <p className="text-xs text-muted-foreground">Active Users</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
+            {/* Budget Forecast */}
+            <Card className="border-primary/30 bg-primary/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ArrowUpRight className="h-5 w-5 text-primary" />
+                  Budget Forecast
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Daily Avg Cost</p>
+                    <p className="text-xl font-bold">{formatCost(forecast.dailyRate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Projected Weekly</p>
+                    <p className="text-xl font-bold">{formatCost(forecast.weeklyForecast)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Projected Monthly</p>
+                    <p className="text-xl font-bold">{formatCost(forecast.monthlyForecast)}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 italic">
+                  Forecast extrapolated from average daily usage in the selected period.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Per-User Usage Table */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Usage Per User</CardTitle>
+                <CardTitle className="text-lg">Usage Per User ({timePeriod === 'week' ? 'This Week' : 'This Month'})</CardTitle>
               </CardHeader>
               <CardContent>
                 {userUsageSummaries.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4">No usage data yet. Usage will appear after users interact with the AI agent.</p>
+                  <p className="text-sm text-muted-foreground py-4">No usage data for this period.</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -475,10 +560,10 @@ export default function AdminDashboard() {
                           <td className="py-3 pr-4">Total</td>
                           <td className="py-3 pr-4 text-right tabular-nums">{totalApiCalls}</td>
                           <td className="py-3 pr-4 text-right tabular-nums">
-                            {formatTokens(usageLogs.reduce((s, l) => s + l.prompt_tokens, 0))}
+                            {formatTokens(filteredLogs.reduce((s, l) => s + l.prompt_tokens, 0))}
                           </td>
                           <td className="py-3 pr-4 text-right tabular-nums">
-                            {formatTokens(usageLogs.reduce((s, l) => s + l.completion_tokens, 0))}
+                            {formatTokens(filteredLogs.reduce((s, l) => s + l.completion_tokens, 0))}
                           </td>
                           <td className="py-3 pr-4 text-right tabular-nums">{formatTokens(totalTokensAll)}</td>
                           <td className="py-3 text-right tabular-nums">{formatCost(totalCostAll)}</td>
@@ -490,16 +575,16 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Daily Usage */}
-            {sortedDays.length > 0 && (
+            {/* Daily Usage Chart */}
+            {groupedUsage.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Daily Usage (Last 30 Days)</CardTitle>
+                  <CardTitle className="text-lg">Daily Usage ({timePeriod === 'week' ? 'Last 7 Days' : 'Last 30 Days'})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-1">
-                    {sortedDays.map(([day, stats]) => {
-                      const maxCost = Math.max(...sortedDays.map(([, s]) => s.cost));
+                    {groupedUsage.map(([day, stats]) => {
+                      const maxCost = Math.max(...groupedUsage.map(([, s]) => s.cost));
                       const barWidth = maxCost > 0 ? (stats.cost / maxCost) * 100 : 0;
                       return (
                         <div key={day} className="flex items-center gap-3 text-sm">
