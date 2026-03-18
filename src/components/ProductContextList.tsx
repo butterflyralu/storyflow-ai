@@ -119,9 +119,6 @@ export function ProductContextList() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-sm text-foreground truncate">{ctx.productName}</h3>
-                      {contextId === ctx.id && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 shrink-0">Active</Badge>
-                      )}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       {ctx.industry && (
