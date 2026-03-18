@@ -194,6 +194,7 @@ export function ContextWizard() {
                   options={[
                     { value: 'web', label: 'Web', desc: 'Browser-based' },
                     { value: 'mobile', label: 'Mobile', desc: 'iOS / Android' },
+                    { value: 'desktop', label: 'Desktop', desc: 'Native desktop app' },
                     { value: 'both', label: 'Both', desc: 'Web + Mobile' },
                   ]} />
               </FieldGroup>
