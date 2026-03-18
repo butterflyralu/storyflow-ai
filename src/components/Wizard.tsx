@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { useAuth } from '@/context/AuthContext';
 import { usePersistedContext } from '@/hooks/usePersistedContext';
+import { useStorySaver } from '@/hooks/useStorySaver';
 import { useIsMobile } from '@/hooks/use-mobile';
 import logo from '@/assets/logo.jpeg';
 import { ContextWizard } from '@/components/ContextWizard';
@@ -14,14 +15,53 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader2, MessageSquare, FileText } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { LogOut, Loader2, MessageSquare, FileText, Plus, Layers } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export function Wizard() {
-  const { step, setStep, splitStories, setProductContext, setContextId } = useWizard();
+  const {
+    step, setStep, splitStories, setProductContext, setContextId,
+    contextId, setChatHistory, setDbSessionId, setStory, setEvaluation,
+    resetStory, triggerSidebarRefresh,
+  } = useWizard();
   const { user, signOut } = useAuth();
   const { loadContexts } = usePersistedContext();
+  const { createEpic } = useStorySaver();
   const [loadingContext, setLoadingContext] = useState(true);
+  const [epicDialogOpen, setEpicDialogOpen] = useState(false);
+  const [epicTitle, setEpicTitle] = useState('');
+  const [creatingEpic, setCreatingEpic] = useState(false);
   const isMobile = useIsMobile();
+
+  const handleNewStory = () => {
+    resetStory();
+  };
+
+  const handleCreateEpic = async () => {
+    if (!epicTitle.trim()) return;
+    setCreatingEpic(true);
+    const id = await createEpic(
+      { title: epicTitle.trim(), asA: '', iWant: '', soThat: '', description: '', acceptanceCriteria: [], metadata: { project: '', epic: '', priority: '', estimate: '' } },
+      { contextId },
+    );
+    setCreatingEpic(false);
+    if (id) {
+      toast({ title: 'Epic created' });
+      triggerSidebarRefresh();
+      setEpicDialogOpen(false);
+      setEpicTitle('');
+    } else {
+      toast({ title: 'Failed to create epic', variant: 'destructive' });
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
