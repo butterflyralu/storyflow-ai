@@ -123,6 +123,7 @@ export function Wizard() {
             )}
 
             {step === 3 && <ProductContextSettings />}
+            {step === 4 && <ProductContextList />}
           </main>
         </div>
       </div>

@@ -92,7 +92,7 @@ export function ProductContextSettings() {
               <h2 className="mb-1 font-display text-2xl font-bold tracking-tight text-foreground">Product Context</h2>
               <p className="text-sm text-muted-foreground">Edit your product context settings. Changes apply to new stories.</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setStep(2)} className="rounded-xl gap-1.5 text-xs shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => setStep(4)} className="rounded-xl gap-1.5 text-xs shrink-0">
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to Chat
             </Button>

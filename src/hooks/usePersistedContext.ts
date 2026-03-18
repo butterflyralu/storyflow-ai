@@ -81,5 +81,16 @@ export function usePersistedContext() {
     }));
   }, [user]);
 
-  return { saveContext, updateContext, loadContexts };
+  const deleteContext = useCallback(async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase
+      .from('product_contexts')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (error) { console.error('Delete context error:', error); return false; }
+    return true;
+  }, [user]);
+
+  return { saveContext, updateContext, loadContexts, deleteContext };
 }
