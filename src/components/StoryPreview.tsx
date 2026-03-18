@@ -179,6 +179,7 @@ function EmptyStoryState() {
 export function StoryPreview() {
   const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setPendingSplitStories, setEpicSummary, contextId, dbSessionId, triggerSidebarRefresh } = useWizard();
   const [saving, setSaving] = useState(false);
+  const { saveGeneratedStory } = useStorySaver();
   const [splitting, setSplitting] = useState(false);
   const [appliedFields, setAppliedFields] = useState<Set<StoryField>>(new Set());
   const [dismissedCriteria, setDismissedCriteria] = useState<Set<string>>(new Set());
