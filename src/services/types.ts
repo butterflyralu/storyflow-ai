@@ -43,7 +43,7 @@ export interface ValidateContextResponse {
 }
 
 export type ProductType = 'b2b' | 'b2c' | 'enterprise' | 'internal';
-export type Platform = 'web' | 'mobile' | 'both';
+export type Platform = 'web' | 'mobile' | 'desktop' | 'both';
 
 export interface SaveContextRequest {
   productName: string;
