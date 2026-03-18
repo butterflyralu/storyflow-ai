@@ -6,10 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors } from 'lucide-react';
+import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors, FileText, ClipboardList } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type StoryField = 'title' | 'userStory' | 'soThat' | 'description' | 'acceptanceCriteria' | 'unmatched';
 
@@ -98,7 +104,6 @@ function EditableField({
 }) {
   const [draft, setDraft] = useState(value);
 
-  // Sync draft when value changes externally (e.g. Apply suggestion)
   const lastExternal = useRef(value);
   if (value !== lastExternal.current) {
     lastExternal.current = value;
@@ -131,7 +136,6 @@ function EditableField({
 }
 
 function EditableInline({ value, onSave, placeholder }: { value: string; onSave: (val: string) => void; placeholder: string }) {
-// ... keep existing code
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const save = () => { onSave(draft); setEditing(false); };
@@ -157,13 +161,45 @@ function EditableInline({ value, onSave, placeholder }: { value: string; onSave:
   );
 }
 
+function EmptyStoryState() {
+  return (
+    <Card className="flex flex-col items-center justify-center border-0 shadow-lg p-8 text-center min-h-[300px]">
+      <div className="rounded-full bg-accent p-4 mb-4">
+        <FileText className="h-8 w-8 text-accent-foreground" />
+      </div>
+      <h3 className="text-lg font-semibold text-foreground mb-2">Your story will appear here</h3>
+      <p className="text-sm text-muted-foreground max-w-sm">
+        Start describing your user story idea in the chat — the AI will help shape it into a well-structured draft with acceptance criteria.
+      </p>
+    </Card>
+  );
+}
+
 export function StoryPreview() {
   const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setPendingSplitStories, setEpicSummary } = useWizard();
   const [saving, setSaving] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [appliedFields, setAppliedFields] = useState<Set<StoryField>>(new Set());
   const [dismissedCriteria, setDismissedCriteria] = useState<Set<string>>(new Set());
-  const formatForJira = () => {
+
+  // Check if story has any content
+  const hasContent = !!(story.title || story.asA || story.iWant || story.soThat || story.description);
+
+  const formatForJira = (markdown = false) => {
+    if (markdown) {
+      const lines = [`# ${story.title}`, '', `**As a** ${story.asA}, **I want to** ${story.iWant}, **so that** ${story.soThat}`];
+      if (story.description) lines.push('', '## Description', story.description);
+      if (story.acceptanceCriteria.length > 0) {
+        lines.push('', '## Acceptance Criteria');
+        story.acceptanceCriteria.forEach(g => {
+          lines.push(`### ${g.category}`);
+          g.items.forEach(item => lines.push(`- [ ] ${item}`));
+        });
+      }
+      if (story.metadata.priority) lines.push('', `**Priority:** ${story.metadata.priority}`);
+      if (story.metadata.estimate) lines.push(`**Estimate:** ${story.metadata.estimate}`);
+      return lines.join('\n');
+    }
     const lines = [`Title: ${story.title}`, '', `As a ${story.asA}, I want to ${story.iWant}, so that ${story.soThat}`];
     if (story.description) lines.push('', 'Description:', story.description);
     if (story.acceptanceCriteria.length > 0) {
@@ -176,9 +212,9 @@ export function StoryPreview() {
     return lines.join('\n');
   };
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(formatForJira());
-    toast({ title: '📋 Copied to clipboard!', description: 'Paste it into Jira.' });
+  const handleCopy = async (markdown = false) => {
+    await navigator.clipboard.writeText(formatForJira(markdown));
+    toast({ title: '📋 Copied to clipboard!', description: markdown ? 'Markdown format — paste into Jira.' : 'Plain text copied.' });
   };
 
   const handleSave = async () => {
@@ -188,6 +224,11 @@ export function StoryPreview() {
     setSaving(false);
     toast({ title: '✅ Story saved!', description: 'Your user story has been finalized.' });
   };
+
+  // Show empty state if no content
+  if (!hasContent) {
+    return <EmptyStoryState />;
+  }
 
   const improved = evaluation?.improvedStory;
   const failItems = evaluation?.scorecard;
@@ -224,9 +265,9 @@ export function StoryPreview() {
   return (
     <Card className="flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden border-0 shadow-lg">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-lg">Story Draft</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {evaluation && (
               <Popover>
                 <PopoverTrigger asChild>
@@ -258,10 +299,24 @@ export function StoryPreview() {
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
             {story.title && (
               <>
-                <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 gap-1.5 px-3 text-xs font-semibold">
-                  <Copy className="h-3.5 w-3.5" />
-                  Copy for Jira
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" className="h-8 gap-1.5 px-3 text-xs font-semibold">
+                      <Copy className="h-3.5 w-3.5" />
+                      Copy
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleCopy(false)}>
+                      <ClipboardList className="h-3.5 w-3.5 mr-2" />
+                      Copy as Plain Text
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleCopy(true)}>
+                      <FileText className="h-3.5 w-3.5 mr-2" />
+                      Copy as Markdown
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 gap-1.5 px-4 text-xs font-semibold shadow-sm">
                   <Save className="h-3.5 w-3.5" />
                   {saving ? 'Saving...' : 'Save Story'}
