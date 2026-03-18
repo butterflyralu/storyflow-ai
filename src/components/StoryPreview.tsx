@@ -221,11 +221,17 @@ export function StoryPreview() {
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 500));
-    saveStory(story);
-    setSaving(false);
-    toast({ title: '✅ Story saved!', description: 'Your user story has been finalized.' });
-  };
+    try {
+      saveStory(story);
+      await saveGeneratedStory(story, { contextId, sessionId: dbSessionId, evaluation });
+      triggerSidebarRefresh();
+      toast({ title: '✅ Story saved!', description: 'Your user story has been finalized.' });
+    } catch (err) {
+      console.error('Save story error:', err);
+      toast({ title: 'Failed to save story', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
 
   // Show empty state if no content
   if (!hasContent) {
