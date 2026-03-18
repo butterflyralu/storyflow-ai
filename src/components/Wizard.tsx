@@ -179,6 +179,31 @@ export function Wizard() {
           </main>
         </div>
       </div>
+
+      {/* New Epic Dialog */}
+      <Dialog open={epicDialogOpen} onOpenChange={setEpicDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Epic</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Input
+              placeholder="Epic title..."
+              value={epicTitle}
+              onChange={e => setEpicTitle(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleCreateEpic()}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEpicDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateEpic} disabled={!epicTitle.trim() || creatingEpic}>
+              {creatingEpic ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }
