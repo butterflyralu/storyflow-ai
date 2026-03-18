@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors, FileText, ClipboardList } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
+import { useStorySaver } from '@/hooks/useStorySaver';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 import {
   DropdownMenu,
