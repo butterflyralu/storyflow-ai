@@ -111,7 +111,7 @@ export function AppSidebar() {
 
     if (story.evaluation_result) {
       setEvaluation({
-        overallResult: story.evaluation_result,
+        overallResult: story.evaluation_result as OverallResult,
         scorecard: story.evaluation_scorecard || [],
         improvedStory: story.evaluation_improved_story || null,
         learningInsight: story.evaluation_learning_insight || null,
