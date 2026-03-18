@@ -232,6 +232,7 @@ export function StoryPreview() {
     } finally {
       setSaving(false);
     }
+  };
 
   // Show empty state if no content
   if (!hasContent) {
