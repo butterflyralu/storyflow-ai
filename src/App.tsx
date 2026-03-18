@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FAQ from "./pages/FAQ";
 import AdminDashboard from "./pages/AdminDashboard";
+import Epics from "./pages/Epics";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 

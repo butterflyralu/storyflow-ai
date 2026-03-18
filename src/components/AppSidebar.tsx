@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { usePersistedChat } from '@/hooks/usePersistedChat';
 import { usePersistedContext } from '@/hooks/usePersistedContext';
 import { useStorySaver } from '@/hooks/useStorySaver';
-import type { UIChatMessage } from '@/types/wizard';
+import type { StoryRecord, EpicWithStories } from '@/hooks/useStorySaver';
 import type { ProductContextInput } from '@/types/wizard';
 import {
   Sidebar,
@@ -39,26 +39,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MessageSquare, Plus, Settings, Loader2, HelpCircle, BarChart3, ChevronDown, Layers, FileText, Search, Trash2, Package } from 'lucide-react';
+import { Plus, Settings, Loader2, HelpCircle, BarChart3, ChevronDown, Layers, FileText, Search, Trash2, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-
-interface SavedSession {
-  id: string;
-  title: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface EpicWithStories {
-  id: string;
-  title: string;
-  created_at: string;
-  stories: Array<{ id: string; title: string; created_at: string }>;
-}
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -72,17 +58,16 @@ export function AppSidebar() {
     sidebarRefreshKey, setStory, setEvaluation,
     setProductContext, setContextId,
   } = useWizard();
-  const { loadSessions, loadMessages } = usePersistedChat();
-  const { getEpicsWithStories } = useStorySaver();
+  const { loadMessages } = usePersistedChat();
+  const { getEpicsWithStories, getUngroupedStories, deleteStory, deleteEpic } = useStorySaver();
   const { loadContexts } = usePersistedContext();
 
-  const [sessions, setSessions] = useState<SavedSession[]>([]);
   const [epics, setEpics] = useState<EpicWithStories[]>([]);
+  const [ungroupedStories, setUngroupedStories] = useState<StoryRecord[]>([]);
   const [contexts, setContexts] = useState<(ProductContextInput & { id: string })[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(false);
-  const [loadingEpics, setLoadingEpics] = useState(false);
-  const [sessionSearch, setSessionSearch] = useState('');
-  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [storySearch, setStorySearch] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'story' | 'epic'; id: string; title: string } | null>(null);
 
   // Load contexts
   const refreshContexts = useCallback(async () => {
@@ -94,97 +79,76 @@ export function AppSidebar() {
     refreshContexts();
   }, []);
 
-  // Load sessions for current context
-  const refreshSessions = useCallback(async () => {
-    if (!contextId) { setSessions([]); return; }
-    setLoadingSessions(true);
-    const data = await loadSessions(contextId);
-    setSessions(data);
-    setLoadingSessions(false);
-  }, [contextId, loadSessions]);
-
-  // Load epics for current context
-  const refreshEpics = useCallback(async () => {
-    if (!contextId) { setEpics([]); return; }
-    setLoadingEpics(true);
-    const data = await getEpicsWithStories(contextId);
-    setEpics(data);
-    setLoadingEpics(false);
-  }, [contextId, getEpicsWithStories]);
+  // Load epics + ungrouped stories for current context
+  const refreshData = useCallback(async () => {
+    if (!contextId) { setEpics([]); setUngroupedStories([]); return; }
+    setLoading(true);
+    const [epicsData, ungrouped] = await Promise.all([
+      getEpicsWithStories(contextId),
+      getUngroupedStories(contextId),
+    ]);
+    setEpics(epicsData);
+    setUngroupedStories(ungrouped);
+    setLoading(false);
+  }, [contextId, getEpicsWithStories, getUngroupedStories]);
 
   useEffect(() => {
-    refreshSessions();
-    refreshEpics();
+    refreshData();
   }, [contextId, sidebarRefreshKey]);
 
-  const handleSelectSession = async (session: SavedSession) => {
-    setDbSessionId(session.id);
-    const msgs = await loadMessages(session.id);
-    setChatHistory(msgs);
+  const handleSelectStory = async (story: StoryRecord) => {
+    // Load story data into workspace
+    setStory({
+      title: story.title || '',
+      asA: story.as_a || '',
+      iWant: story.i_want || '',
+      soThat: story.so_that || '',
+      description: story.description || '',
+      acceptanceCriteria: story.acceptance_criteria || [],
+      metadata: story.metadata || { project: '', epic: '', priority: '', estimate: '' },
+    });
 
-    try {
-      const { data } = await supabase
-        .from('generated_stories')
-        .select('*')
-        .eq('session_id', session.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (data && data.length > 0) {
-        const s = data[0] as any;
-        setStory({
-          title: s.title || '',
-          asA: s.as_a || '',
-          iWant: s.i_want || '',
-          soThat: s.so_that || '',
-          description: s.description || '',
-          acceptanceCriteria: s.acceptance_criteria || [],
-          metadata: s.metadata || { project: '', epic: '', priority: '', estimate: '' },
-        });
-        if (s.evaluation_result) {
-          setEvaluation({
-            overallResult: s.evaluation_result,
-            scorecard: s.evaluation_scorecard || [],
-            improvedStory: s.evaluation_improved_story || null,
-            learningInsight: s.evaluation_learning_insight || null,
-            newChecklistRule: null,
-            isLikelyEpic: s.is_likely_epic || false,
-          });
-        } else {
-          setEvaluation(null);
-        }
-      } else {
-        setStory({ title: '', asA: '', iWant: '', soThat: '', description: '', acceptanceCriteria: [], metadata: { project: '', epic: '', priority: '', estimate: '' } });
-        setEvaluation(null);
-      }
-    } catch {
-      setStory({ title: '', asA: '', iWant: '', soThat: '', description: '', acceptanceCriteria: [], metadata: { project: '', epic: '', priority: '', estimate: '' } });
+    if (story.evaluation_result) {
+      setEvaluation({
+        overallResult: story.evaluation_result,
+        scorecard: story.evaluation_scorecard || [],
+        improvedStory: story.evaluation_improved_story || null,
+        learningInsight: story.evaluation_learning_insight || null,
+        newChecklistRule: null,
+        isLikelyEpic: story.is_likely_epic || false,
+      });
+    } else {
       setEvaluation(null);
     }
 
-    setStep(2);
-  };
-
-  const handleDeleteSession = async () => {
-    if (!deleteSessionId || !user) return;
-    try {
-      await supabase.from('chat_messages').delete().eq('session_id', deleteSessionId);
-      await supabase.from('chat_sessions').delete().eq('id', deleteSessionId).eq('user_id', user.id);
-      setSessions(prev => prev.filter(s => s.id !== deleteSessionId));
-      if (dbSessionId === deleteSessionId) {
-        setDbSessionId(null);
-        setChatHistory([]);
-      }
-      toast({ title: 'Session deleted' });
-    } catch {
-      toast({ title: 'Failed to delete session', variant: 'destructive' });
+    // Load the associated chat session if exists
+    if (story.session_id) {
+      setDbSessionId(story.session_id);
+      const msgs = await loadMessages(story.session_id);
+      setChatHistory(msgs);
+    } else {
+      setDbSessionId(null);
+      setChatHistory([]);
     }
-    setDeleteSessionId(null);
+
+    setStep(2);
   };
 
-  const handleNewSession = () => {
-    setChatHistory([]);
-    setDbSessionId(null);
-    setStep(2);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    let success = false;
+    if (deleteTarget.type === 'story') {
+      success = await deleteStory(deleteTarget.id);
+    } else {
+      success = await deleteEpic(deleteTarget.id);
+    }
+    if (success) {
+      toast({ title: `${deleteTarget.type === 'epic' ? 'Epic' : 'Story'} deleted` });
+      refreshData();
+    } else {
+      toast({ title: 'Failed to delete', variant: 'destructive' });
+    }
+    setDeleteTarget(null);
   };
 
   const handleSwitchContext = (ctxId: string) => {
@@ -214,9 +178,49 @@ export function AppSidebar() {
     return `${diffDays}d ago`;
   };
 
-  const filteredSessions = sessionSearch
-    ? sessions.filter(s => s.title.toLowerCase().includes(sessionSearch.toLowerCase()))
-    : sessions;
+  // Filter stories across epics and ungrouped by search
+  const searchLower = storySearch.toLowerCase();
+  const filteredEpics = storySearch
+    ? epics.map(e => ({
+        ...e,
+        stories: e.stories.filter(s => s.title.toLowerCase().includes(searchLower)),
+      })).filter(e => e.stories.length > 0 || e.title.toLowerCase().includes(searchLower))
+    : epics;
+  const filteredUngrouped = storySearch
+    ? ungroupedStories.filter(s => s.title.toLowerCase().includes(searchLower))
+    : ungroupedStories;
+
+  const totalItems = epics.length + ungroupedStories.length;
+
+  const renderStoryItem = (story: StoryRecord) => (
+    <SidebarMenuItem key={story.id}>
+      <SidebarMenuButton
+        onClick={() => handleSelectStory(story)}
+        className="group"
+        tooltip={story.title}
+      >
+        {collapsed ? (
+          <FileText className="h-3.5 w-3.5" />
+        ) : (
+          <div className="flex items-center gap-1 min-w-0 w-full">
+            <FileText className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+              <span className="truncate text-xs">{story.title || 'Untitled Story'}</span>
+              <span className="text-[10px] text-muted-foreground">
+                {formatDate(story.created_at)}
+              </span>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: 'story', id: story.id, title: story.title }); }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 hover:text-destructive shrink-0"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -256,77 +260,19 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Chat Sessions */}
-        {contextId && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="flex items-center justify-between px-3">
-              {!collapsed && (
-                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Sessions
-                </span>
-              )}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              {/* Search */}
-              {!collapsed && sessions.length > 3 && (
-                <div className="px-3 pb-1">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                    <Input
-                      value={sessionSearch}
-                      onChange={e => setSessionSearch(e.target.value)}
-                      placeholder="Search sessions..."
-                      className="h-7 pl-7 text-xs rounded-lg"
-                    />
-                  </div>
-                </div>
-              )}
-              <SidebarMenu>
-                {loadingSessions ? (
-                  <div className="flex justify-center py-3">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  </div>
-                ) : filteredSessions.length === 0 ? (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">
-                    {collapsed ? '' : sessionSearch ? 'No matching sessions' : 'No sessions yet'}
-                  </div>
-                ) : (
-                  filteredSessions.map(session => (
-                    <SidebarMenuItem key={session.id}>
-                      <SidebarMenuButton
-                        onClick={() => handleSelectSession(session)}
-                        className={cn(
-                          'group',
-                          dbSessionId === session.id && 'bg-accent text-accent-foreground font-medium',
-                        )}
-                        tooltip={session.title}
-                      >
-                        {collapsed ? (
-                          <MessageSquare className="h-3.5 w-3.5" />
-                        ) : (
-                          <div className="flex items-center gap-1 min-w-0 w-full">
-                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                              <span className="truncate text-sm">{session.title}</span>
-                              <span className="text-[10px] text-muted-foreground">
-                                {formatDate(session.updated_at)}
-                              </span>
-                            </div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setDeleteSessionId(session.id); }}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 hover:text-destructive shrink-0"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))
-                )}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+        {/* Search */}
+        {contextId && !collapsed && totalItems > 3 && (
+          <div className="px-5 pb-1">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <Input
+                value={storySearch}
+                onChange={e => setStorySearch(e.target.value)}
+                placeholder="Search stories & epics..."
+                className="h-7 pl-7 text-xs rounded-lg"
+              />
+            </div>
+          </div>
         )}
 
         {/* Epics */}
@@ -340,16 +286,16 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {loadingEpics ? (
+                {loading ? (
                   <div className="flex justify-center py-3">
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   </div>
-                ) : epics.length === 0 ? (
+                ) : filteredEpics.length === 0 ? (
                   <div className="px-3 py-2 text-xs text-muted-foreground">
-                    {collapsed ? '' : 'No epics yet'}
+                    {collapsed ? '' : storySearch ? 'No matching epics' : 'No epics yet'}
                   </div>
                 ) : (
-                  epics.map(epic => (
+                  filteredEpics.map(epic => (
                     <SidebarMenuItem key={epic.id}>
                       {collapsed ? (
                         <SidebarMenuButton tooltip={`${epic.title} (${epic.stories.length} stories)`}>
@@ -357,25 +303,29 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       ) : (
                         <Collapsible>
-                          <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors">
+                          <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors group">
                             <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform [&[data-state=open]]:rotate-180" />
                             <Layers className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                             <span className="truncate flex-1 text-left">{epic.title}</span>
                             <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
                               {epic.stories.length}
                             </Badge>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: 'epic', id: epic.id, title: epic.title }); }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 hover:text-destructive shrink-0"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
                           </CollapsibleTrigger>
                           <CollapsibleContent>
-                            <div className="ml-5 border-l border-border pl-2 space-y-0.5 py-1">
-                              {epic.stories.map(story => (
-                                <div
-                                  key={story.id}
-                                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 transition-colors"
-                                >
-                                  <FileText className="h-3 w-3 flex-shrink-0" />
-                                  <span className="truncate">{story.title}</span>
-                                </div>
-                              ))}
+                            <div className="ml-5 border-l border-border pl-1 py-1">
+                              <SidebarMenu>
+                                {epic.stories.length === 0 ? (
+                                  <div className="px-2 py-1 text-[10px] text-muted-foreground italic">No stories</div>
+                                ) : (
+                                  epic.stories.map(story => renderStoryItem(story))
+                                )}
+                              </SidebarMenu>
                             </div>
                           </CollapsibleContent>
                         </Collapsible>
@@ -387,20 +337,58 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        {/* Ungrouped Stories */}
+        {contextId && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center px-3">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {!collapsed && <FileText className="h-3.5 w-3.5" />}
+                {collapsed ? <FileText className="h-4 w-4" /> : 'Stories'}
+              </span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {loading ? (
+                  <div className="flex justify-center py-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : filteredUngrouped.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    {collapsed ? '' : storySearch ? 'No matching stories' : 'No ungrouped stories'}
+                  </div>
+                ) : (
+                  filteredUngrouped.map(story => renderStoryItem(story))
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {!collapsed && (
         <SidebarFooter className="p-3 space-y-1">
           {contextId && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setStep(4)}
-            >
-              <Settings className="h-3.5 w-3.5" />
-              Manage Products
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => navigate('/epics')}
+              >
+                <Layers className="h-3.5 w-3.5" />
+                Manage Epics
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setStep(4)}
+              >
+                <Settings className="h-3.5 w-3.5" />
+                Manage Products
+              </Button>
+            </>
           )}
           {isAdmin && (
             <Button
@@ -425,18 +413,23 @@ export function AppSidebar() {
         </SidebarFooter>
       )}
 
-      {/* Delete session confirmation */}
-      <AlertDialog open={!!deleteSessionId} onOpenChange={(open) => !open && setDeleteSessionId(null)}>
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete session?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {deleteTarget?.type === 'epic' ? 'epic' : 'story'}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this chat session and all its messages. This action cannot be undone.
+              {deleteTarget?.type === 'epic'
+                ? `This will delete the epic "${deleteTarget.title}" and ungroup its stories. Stories will not be deleted.`
+                : `This will permanently delete the story "${deleteTarget?.title}". This action cannot be undone.`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSession} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
