@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { WizardProvider } from "@/context/WizardContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FAQ from "./pages/FAQ";
@@ -43,7 +44,7 @@ const App = () => (
             <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/epics" element={<ProtectedRoute><Epics /></ProtectedRoute>} />
+            <Route path="/epics" element={<ProtectedRoute><WizardProvider><Epics /></WizardProvider></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
