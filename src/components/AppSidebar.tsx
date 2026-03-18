@@ -402,7 +402,7 @@ export function AppSidebar() {
               onClick={() => setStep(4)}
             >
               <Settings className="h-3.5 w-3.5" />
-              Edit Context
+              Manage Products
             </Button>
           )}
           {isAdmin && (
