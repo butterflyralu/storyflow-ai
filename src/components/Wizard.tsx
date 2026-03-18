@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { useAuth } from '@/context/AuthContext';
 import { usePersistedContext } from '@/hooks/usePersistedContext';
+import { useStorySaver } from '@/hooks/useStorySaver';
 import { useIsMobile } from '@/hooks/use-mobile';
 import logo from '@/assets/logo.jpeg';
 import { ContextWizard } from '@/components/ContextWizard';
@@ -14,14 +15,53 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader2, MessageSquare, FileText } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { LogOut, Loader2, MessageSquare, FileText, Plus, Layers } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export function Wizard() {
-  const { step, setStep, splitStories, setProductContext, setContextId } = useWizard();
+  const {
+    step, setStep, splitStories, setProductContext, setContextId,
+    contextId, setChatHistory, setDbSessionId, setStory, setEvaluation,
+    resetStory, triggerSidebarRefresh,
+  } = useWizard();
   const { user, signOut } = useAuth();
   const { loadContexts } = usePersistedContext();
+  const { createEpic } = useStorySaver();
   const [loadingContext, setLoadingContext] = useState(true);
+  const [epicDialogOpen, setEpicDialogOpen] = useState(false);
+  const [epicTitle, setEpicTitle] = useState('');
+  const [creatingEpic, setCreatingEpic] = useState(false);
   const isMobile = useIsMobile();
+
+  const handleNewStory = () => {
+    resetStory();
+  };
+
+  const handleCreateEpic = async () => {
+    if (!epicTitle.trim()) return;
+    setCreatingEpic(true);
+    const id = await createEpic(
+      { title: epicTitle.trim(), asA: '', iWant: '', soThat: '', description: '', acceptanceCriteria: [], metadata: { project: '', epic: '', priority: '', estimate: '' } },
+      { contextId },
+    );
+    setCreatingEpic(false);
+    if (id) {
+      toast({ title: 'Epic created' });
+      triggerSidebarRefresh();
+      setEpicDialogOpen(false);
+      setEpicTitle('');
+    } else {
+      toast({ title: 'Failed to create epic', variant: 'destructive' });
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -66,7 +106,19 @@ export function Wizard() {
                   </h1>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="hidden sm:block rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
+                  {contextId && (
+                    <>
+                      <Button size="sm" onClick={handleNewStory} className="gap-1.5 h-8 rounded-lg">
+                        <Plus className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">New Story</span>
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setEpicDialogOpen(true)} className="gap-1.5 h-8 rounded-lg">
+                        <Layers className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">New Epic</span>
+                      </Button>
+                    </>
+                  )}
+                  <div className="hidden md:block rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
                     AI Story Assistant
                   </div>
                   {user && (
@@ -127,6 +179,31 @@ export function Wizard() {
           </main>
         </div>
       </div>
+
+      {/* New Epic Dialog */}
+      <Dialog open={epicDialogOpen} onOpenChange={setEpicDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Epic</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Input
+              placeholder="Epic title..."
+              value={epicTitle}
+              onChange={e => setEpicTitle(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleCreateEpic()}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEpicDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateEpic} disabled={!epicTitle.trim() || creatingEpic}>
+              {creatingEpic ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }

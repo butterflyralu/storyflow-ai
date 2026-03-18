@@ -260,14 +260,11 @@ export function AppSidebar() {
         {contextId && (
           <SidebarGroup>
             <SidebarGroupLabel className="flex items-center justify-between px-3">
-              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {!collapsed && <MessageSquare className="h-3.5 w-3.5" />}
-                {collapsed ? <MessageSquare className="h-4 w-4" /> : 'Sessions'}
-              </span>
               {!collapsed && (
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={handleNewSession}>
-                  <Plus className="h-3 w-3" />
-                </Button>
+                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Sessions
+                </span>
               )}
             </SidebarGroupLabel>
             <SidebarGroupContent>
