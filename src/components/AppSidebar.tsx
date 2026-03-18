@@ -399,7 +399,7 @@ export function AppSidebar() {
               variant="ghost"
               size="sm"
               className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setStep(3)}
+              onClick={() => setStep(4)}
             >
               <Settings className="h-3.5 w-3.5" />
               Edit Context

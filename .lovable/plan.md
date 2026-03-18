@@ -1,44 +1,33 @@
 
 
-## Plan: Product Context List + CRUD before Edit
+## Plan: Add Logo and Adapt Styling to Blue Gradient Theme
 
-### Current behavior
-- Sidebar footer "Edit Context" button sets `step(3)`, which renders `ProductContextSettings` -- immediately opening the edit form for the *current* context.
-- "Use Demo Content" button appears in `ContextWizard` (step 1) even when editing existing contexts.
+The uploaded image is a blue-gradient logo for StoryFlow AI. Two things to do: use it as favicon + header logo, and shift the color palette from purple to blue to match.
 
-### Proposed changes
+### Steps
 
-**1. Add a new WizardStep value `4`** for the context list view.
-- Update `WizardStep` type from `1 | 2 | 3` to `1 | 2 | 3 | 4`.
-- "Edit Context" sidebar button will now call `setStep(4)` instead of `setStep(3)`.
+1. **Copy logo to public directory** — Copy `user-uploads://storyflowAI.jpeg` to `public/logo.jpeg` for favicon and to `src/assets/logo.jpeg` for component use
 
-**2. Create `ProductContextList` component** (`src/components/ProductContextList.tsx`)
-- Displays all user contexts as cards in a list, each showing: product name, industry, platform badge, and updated date.
-- Each card has: **Edit** (pencil icon) and **Delete** (trash icon) actions.
-- Edit action: sets the selected context as active and navigates to step 3 (existing edit form).
-- Delete action: shows an `AlertDialog` confirmation, then deletes from DB and refreshes list.
-- A "Create New Product" button at the top navigates to step 1 (the `ContextWizard`).
-- "Back to Chat" button returns to step 2.
+2. **Update `index.html`** — Add favicon link pointing to `/logo.jpeg`
 
-**3. Update `Wizard.tsx`** to render `ProductContextList` when `step === 4`.
+3. **Update `src/components/Wizard.tsx`** — Replace the "S" placeholder div with an `<img>` tag using the imported logo asset
 
-**4. Update `ContextWizard` (step 1)**
-- "Use Demo Content" button is already only shown on `screen === 0` inside the wizard, which is only reached when creating a new context. No change needed -- this already only appears for new contexts.
+4. **Update `src/index.css`** — Shift the color palette from purple (258°) to blue (210-220°) to match the logo's gradient:
+   - `--primary`: purple → blue (e.g., `210 80% 50%`)
+   - `--accent`: purple-tinted → blue-tinted
+   - `--ring`: match primary
+   - All `--purple`, `--violet`, `--indigo` custom vars → blue range
+   - `--panel-dark` → dark navy
+   - Both light and dark mode vars updated
 
-**5. Update `ProductContextSettings` (step 3)**
-- Change "Back to Chat" button to go to step 4 (context list) instead of step 2, so users return to the list after editing.
+5. **Update `tailwind.config.ts`** — No structural changes needed (colors reference CSS vars), but update shadow hue references from `258` to `210`
 
-**6. Update `AppSidebar`**
-- Change "Edit Context" `onClick` from `setStep(3)` to `setStep(4)`.
-
-**7. Add delete method to `usePersistedContext` hook**
-- Add `deleteContext(id: string)` function that deletes from `product_contexts` table.
-
-### Files changed
-- `src/types/wizard.ts` -- expand `WizardStep` type
-- `src/components/ProductContextList.tsx` -- new component
-- `src/components/Wizard.tsx` -- render new step
-- `src/components/ProductContextSettings.tsx` -- back button targets step 4
-- `src/components/AppSidebar.tsx` -- edit context targets step 4
-- `src/hooks/usePersistedContext.ts` -- add `deleteContext`
+| File | Change |
+|------|--------|
+| `public/logo.jpeg` | Copy uploaded logo |
+| `src/assets/logo.jpeg` | Copy uploaded logo for imports |
+| `index.html` | Add `<link rel="icon">` |
+| `src/components/Wizard.tsx` | Replace placeholder with logo image |
+| `src/index.css` | Shift palette from purple to blue |
+| `tailwind.config.ts` | Update shadow hue values |
 
