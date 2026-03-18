@@ -106,7 +106,19 @@ export function Wizard() {
                   </h1>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="hidden sm:block rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
+                  {contextId && (
+                    <>
+                      <Button size="sm" onClick={handleNewStory} className="gap-1.5 h-8 rounded-lg">
+                        <Plus className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">New Story</span>
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setEpicDialogOpen(true)} className="gap-1.5 h-8 rounded-lg">
+                        <Layers className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">New Epic</span>
+                      </Button>
+                    </>
+                  )}
+                  <div className="hidden md:block rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
                     AI Story Assistant
                   </div>
                   {user && (
