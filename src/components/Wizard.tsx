@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useWizard } from '@/context/WizardContext';
 import { useAuth } from '@/context/AuthContext';
 import { usePersistedContext } from '@/hooks/usePersistedContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import logo from '@/assets/logo.jpeg';
 import { ContextWizard } from '@/components/ContextWizard';
 import { ChatPanel } from '@/components/ChatPanel';
@@ -10,14 +11,16 @@ import { SplitStoriesView } from '@/components/SplitStoriesView';
 import { ProductContextSettings } from '@/components/ProductContextSettings';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Loader2, MessageSquare, FileText } from 'lucide-react';
 
 export function Wizard() {
   const { step, setStep, splitStories, setProductContext, setContextId } = useWizard();
   const { user, signOut } = useAuth();
   const { loadContexts } = usePersistedContext();
   const [loadingContext, setLoadingContext] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     let cancelled = false;
@@ -85,14 +88,37 @@ export function Wizard() {
             {step === 1 && <ContextWizard />}
 
             {step === 2 && (
-              <div className="flex h-full overflow-hidden">
-                <div className="flex w-1/2 flex-col border-r border-border min-h-0 overflow-hidden">
-                  <ChatPanel />
+              isMobile ? (
+                <Tabs defaultValue="chat" className="flex flex-col h-full">
+                  <TabsList className="shrink-0 mx-4 mt-2 grid w-auto grid-cols-2">
+                    <TabsTrigger value="chat" className="gap-1.5 text-xs">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Chat
+                    </TabsTrigger>
+                    <TabsTrigger value="story" className="gap-1.5 text-xs">
+                      <FileText className="h-3.5 w-3.5" />
+                      Story
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="chat" className="flex-1 min-h-0 overflow-hidden mt-0">
+                    <ChatPanel />
+                  </TabsContent>
+                  <TabsContent value="story" className="flex-1 min-h-0 overflow-hidden mt-0">
+                    <div className="h-full overflow-y-auto overscroll-y-contain p-4">
+                      {splitStories.length > 0 ? <SplitStoriesView /> : <StoryPreview />}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <div className="flex h-full overflow-hidden">
+                  <div className="flex w-1/2 flex-col border-r border-border min-h-0 overflow-hidden">
+                    <ChatPanel />
+                  </div>
+                  <div className="w-1/2 min-h-0 overflow-hidden bg-muted/30">
+                    {splitStories.length > 0 ? <SplitStoriesView /> : <div className="h-full overflow-y-auto overscroll-y-contain p-5"><StoryPreview /></div>}
+                  </div>
                 </div>
-                <div className="w-1/2 min-h-0 overflow-hidden bg-muted/30">
-                  {splitStories.length > 0 ? <SplitStoriesView /> : <div className="h-full overflow-y-auto overscroll-y-contain p-5"><StoryPreview /></div>}
-                </div>
-              </div>
+              )
             )}
 
             {step === 3 && <ProductContextSettings />}
