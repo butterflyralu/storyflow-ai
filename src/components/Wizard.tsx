@@ -9,6 +9,7 @@ import { ChatPanel } from '@/components/ChatPanel';
 import { StoryPreview } from '@/components/StoryPreview';
 import { SplitStoriesView } from '@/components/SplitStoriesView';
 import { ProductContextSettings } from '@/components/ProductContextSettings';
+import { ProductContextList } from '@/components/ProductContextList';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
