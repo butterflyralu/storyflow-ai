@@ -187,6 +187,7 @@ export function SplitStoriesView() {
   } = useWizard();
 
   const { saveEpicWithStories } = useStorySaver();
+  const { cloneSession } = usePersistedChat();
   const [saving, setSaving] = useState(false);
   const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set());
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
