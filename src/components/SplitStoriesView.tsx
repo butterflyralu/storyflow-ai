@@ -19,6 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 import { cn } from '@/lib/utils';
 import { useStorySaver } from '@/hooks/useStorySaver';
+import { usePersistedChat } from '@/hooks/usePersistedChat';
 import type { StoryDraft, EvaluateResponse } from '@/services/types';
 
 function StoryCard({
@@ -186,6 +187,7 @@ export function SplitStoriesView() {
   } = useWizard();
 
   const { saveEpicWithStories } = useStorySaver();
+  const { cloneSession } = usePersistedChat();
   const [saving, setSaving] = useState(false);
   const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set());
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -201,7 +203,12 @@ export function SplitStoriesView() {
   const handleSaveAll = async () => {
     setSaving(true);
     try {
-      const result = await saveEpicWithStories(originalStory, splitStories, { contextId, sessionId: dbSessionId });
+      const result = await saveEpicWithStories(originalStory, splitStories, {
+        contextId,
+        sessionId: dbSessionId,
+        epicSummary,
+        cloneSession: dbSessionId ? cloneSession : undefined,
+      });
       if (result) {
         toast({ title: '✅ Epic & stories saved!', description: `Epic with ${result.storyIds.length} stories saved.` });
       } else {

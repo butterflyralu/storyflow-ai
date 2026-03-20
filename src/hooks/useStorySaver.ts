@@ -75,17 +75,33 @@ export function useStorySaver() {
     opts: {
       contextId?: string | null;
       sessionId?: string | null;
+      epicSummary?: string | null;
     } = {}
   ) => {
     if (!user) return null;
+
+    // Build a rich description from the original story
+    const acText = originalStory.acceptanceCriteria
+      ?.map((g: any) => `- [${g.category}]: ${g.items.join(', ')}`)
+      .join('\n') || '';
+
+    const richDescription = [
+      `Original Story: ${originalStory.title}`,
+      `As a ${originalStory.asA}, I want to ${originalStory.iWant}, so that ${originalStory.soThat}.`,
+      '',
+      originalStory.description,
+      '',
+      acText ? `Acceptance Criteria:\n${acText}` : '',
+    ].filter(Boolean).join('\n');
+
     const { data, error } = await supabase
       .from('epics' as any)
       .insert({
         user_id: user.id,
         context_id: opts.contextId ?? null,
         session_id: opts.sessionId ?? null,
-        title: originalStory.title,
-        description: originalStory.description,
+        title: opts.epicSummary || originalStory.title,
+        description: richDescription,
         original_as_a: originalStory.asA,
         original_i_want: originalStory.iWant,
         original_so_that: originalStory.soThat,
@@ -106,16 +122,33 @@ export function useStorySaver() {
       contextId?: string | null;
       sessionId?: string | null;
       evaluations?: Map<number, EvaluateResponse>;
+      epicSummary?: string | null;
+      cloneSession?: (sourceSessionId: string, newTitle: string, contextId: string | null) => Promise<string | null>;
     } = {}
   ) => {
-    const epicId = await createEpic(originalStory, opts);
+    const epicId = await createEpic(originalStory, {
+      contextId: opts.contextId,
+      sessionId: opts.sessionId,
+      epicSummary: opts.epicSummary,
+    });
     if (!epicId) return null;
 
     const savedIds: string[] = [];
     for (let i = 0; i < childStories.length; i++) {
+      // Clone the parent chat session for each child story
+      let childSessionId = opts.sessionId ?? null;
+      if (opts.sessionId && opts.cloneSession) {
+        const clonedId = await opts.cloneSession(
+          opts.sessionId,
+          childStories[i].title || `Story ${i + 1}`,
+          opts.contextId ?? null
+        );
+        if (clonedId) childSessionId = clonedId;
+      }
+
       const id = await saveGeneratedStory(childStories[i], {
         contextId: opts.contextId,
-        sessionId: opts.sessionId,
+        sessionId: childSessionId,
         epicId,
         evaluation: opts.evaluations?.get(i) ?? null,
       });
