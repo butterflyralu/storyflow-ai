@@ -203,7 +203,12 @@ export function SplitStoriesView() {
   const handleSaveAll = async () => {
     setSaving(true);
     try {
-      const result = await saveEpicWithStories(originalStory, splitStories, { contextId, sessionId: dbSessionId });
+      const result = await saveEpicWithStories(originalStory, splitStories, {
+        contextId,
+        sessionId: dbSessionId,
+        epicSummary,
+        cloneSession: dbSessionId ? cloneSession : undefined,
+      });
       if (result) {
         toast({ title: '✅ Epic & stories saved!', description: `Epic with ${result.storyIds.length} stories saved.` });
       } else {

@@ -69,5 +69,33 @@ export function usePersistedChat() {
     }));
   }, [user]);
 
-  return { createSession, saveMessage, updateSessionTitle, loadSessions, loadMessages };
+  const cloneSession = useCallback(async (
+    sourceSessionId: string,
+    newTitle: string,
+    contextId: string | null
+  ): Promise<string | null> => {
+    if (!user) return null;
+
+    // Create a new session
+    const newSessionId = await createSession(contextId, newTitle);
+    if (!newSessionId) return null;
+
+    // Load messages from the source session
+    const messages = await loadMessages(sourceSessionId);
+
+    // Copy all messages into the new session
+    for (const msg of messages) {
+      await supabase.from('chat_messages').insert({
+        session_id: newSessionId,
+        user_id: user.id,
+        role: msg.role,
+        content: msg.content,
+        options: msg.options ?? null,
+      });
+    }
+
+    return newSessionId;
+  }, [user, createSession, loadMessages]);
+
+  return { createSession, saveMessage, updateSessionTitle, loadSessions, loadMessages, cloneSession };
 }

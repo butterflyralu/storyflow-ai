@@ -122,16 +122,33 @@ export function useStorySaver() {
       contextId?: string | null;
       sessionId?: string | null;
       evaluations?: Map<number, EvaluateResponse>;
+      epicSummary?: string | null;
+      cloneSession?: (sourceSessionId: string, newTitle: string, contextId: string | null) => Promise<string | null>;
     } = {}
   ) => {
-    const epicId = await createEpic(originalStory, opts);
+    const epicId = await createEpic(originalStory, {
+      contextId: opts.contextId,
+      sessionId: opts.sessionId,
+      epicSummary: opts.epicSummary,
+    });
     if (!epicId) return null;
 
     const savedIds: string[] = [];
     for (let i = 0; i < childStories.length; i++) {
+      // Clone the parent chat session for each child story
+      let childSessionId = opts.sessionId ?? null;
+      if (opts.sessionId && opts.cloneSession) {
+        const clonedId = await opts.cloneSession(
+          opts.sessionId,
+          childStories[i].title || `Story ${i + 1}`,
+          opts.contextId ?? null
+        );
+        if (clonedId) childSessionId = clonedId;
+      }
+
       const id = await saveGeneratedStory(childStories[i], {
         contextId: opts.contextId,
-        sessionId: opts.sessionId,
+        sessionId: childSessionId,
         epicId,
         evaluation: opts.evaluations?.get(i) ?? null,
       });
