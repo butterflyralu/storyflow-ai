@@ -19,6 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 import { cn } from '@/lib/utils';
 import { useStorySaver } from '@/hooks/useStorySaver';
+import { usePersistedChat } from '@/hooks/usePersistedChat';
 import type { StoryDraft, EvaluateResponse } from '@/services/types';
 
 function StoryCard({
