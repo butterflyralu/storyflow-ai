@@ -9,7 +9,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors, FileText, ClipboardList } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
-import { useStorySaver } from '@/hooks/useStorySaver';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 import {
   DropdownMenu,
@@ -177,9 +176,8 @@ function EmptyStoryState() {
 }
 
 export function StoryPreview() {
-  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setPendingSplitStories, setEpicSummary, contextId, dbSessionId, triggerSidebarRefresh } = useWizard();
+  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setPendingSplitStories, setEpicSummary } = useWizard();
   const [saving, setSaving] = useState(false);
-  const { saveGeneratedStory } = useStorySaver();
   const [splitting, setSplitting] = useState(false);
   const [appliedFields, setAppliedFields] = useState<Set<StoryField>>(new Set());
   const [dismissedCriteria, setDismissedCriteria] = useState<Set<string>>(new Set());
@@ -221,17 +219,10 @@ export function StoryPreview() {
 
   const handleSave = async () => {
     setSaving(true);
-    try {
-      saveStory(story);
-      await saveGeneratedStory(story, { contextId, sessionId: dbSessionId, evaluation });
-      triggerSidebarRefresh();
-      toast({ title: '✅ Story saved!', description: 'Your user story has been finalized.' });
-    } catch (err) {
-      console.error('Save story error:', err);
-      toast({ title: 'Failed to save story', variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
+    await new Promise(r => setTimeout(r, 500));
+    saveStory(story);
+    setSaving(false);
+    toast({ title: '✅ Story saved!', description: 'Your user story has been finalized.' });
   };
 
   // Show empty state if no content
