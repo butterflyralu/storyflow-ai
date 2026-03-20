@@ -95,7 +95,7 @@ export function AppSidebar() {
 
   useEffect(() => {
     refreshData();
-  }, [contextId, sidebarRefreshKey]);
+  }, [refreshData, sidebarRefreshKey]);
 
   const handleSelectStory = async (story: StoryRecord) => {
     // Load story data into workspace
