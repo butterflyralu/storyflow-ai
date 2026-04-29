@@ -1,33 +1,30 @@
+## Regenerate traces export
 
+The previous `traces_export.json` appears to be inaccessible for download. I'll regenerate it fresh from the current database with the same comprehensive scope.
 
-## Plan: Add Logo and Adapt Styling to Blue Gradient Theme
+### What will be exported
 
-The uploaded image is a blue-gradient logo for StoryFlow AI. Two things to do: use it as favicon + header logo, and shift the color palette from purple to blue to match.
+A single JSON file `traces_export_v2.json` written to `/mnt/documents/`, containing for **all users**:
 
-### Steps
+- **All product contexts** (mission, persona, strategy, north star, objectives, AC format, product details)
+- **All epics** (title, description, original asA/iWant/soThat, parent context)
+- **All generated stories** with:
+  - Full story fields: `title`, `asA`, `iWant`, `soThat`, `description`, `acceptance_criteria`, `metadata`
+  - Full evaluation: `evaluation_result`, `evaluation_scorecard`, `evaluation_improved_story`, `evaluation_learning_insight`
+  - `is_likely_epic` flag and parent `epic_id` (with embedded epic info)
+  - Linked `context_id` and `session_id`
+- **All chat sessions** with their full message history (role, content, options, timestamps)
 
-1. **Copy logo to public directory** — Copy `user-uploads://storyflowAI.jpeg` to `public/logo.jpeg` for favicon and to `src/assets/logo.jpeg` for component use
+### Structure
 
-2. **Update `index.html`** — Add favicon link pointing to `/logo.jpeg`
+Top-level keys: `exported_at`, `product_contexts[]`, `epics[]`, `stories[]`, `sessions[]` (each session contains its `messages[]`). Stories embed their parent epic and context inline for easy traversal, and also keep raw IDs for relational use.
 
-3. **Update `src/components/Wizard.tsx`** — Replace the "S" placeholder div with an `<img>` tag using the imported logo asset
+### Delivery
 
-4. **Update `src/index.css`** — Shift the color palette from purple (258°) to blue (210-220°) to match the logo's gradient:
-   - `--primary`: purple → blue (e.g., `210 80% 50%`)
-   - `--accent`: purple-tinted → blue-tinted
-   - `--ring`: match primary
-   - All `--purple`, `--violet`, `--indigo` custom vars → blue range
-   - `--panel-dark` → dark navy
-   - Both light and dark mode vars updated
+After generation I'll emit a `<lov-artifact>` tag pointing at `traces_export_v2.json` so it shows up as a fresh download in your Files panel.
 
-5. **Update `tailwind.config.ts`** — No structural changes needed (colors reference CSS vars), but update shadow hue references from `258` to `210`
+### Technical approach
 
-| File | Change |
-|------|--------|
-| `public/logo.jpeg` | Copy uploaded logo |
-| `src/assets/logo.jpeg` | Copy uploaded logo for imports |
-| `index.html` | Add `<link rel="icon">` |
-| `src/components/Wizard.tsx` | Replace placeholder with logo image |
-| `src/index.css` | Shift palette from purple to blue |
-| `tailwind.config.ts` | Update shadow hue values |
-
+- Use `psql` via `code--exec` to run a single aggregation query producing nested JSON (same pattern as last time)
+- Write directly to `/mnt/documents/traces_export_v2.json`
+- Verify file size and record counts before handing off
