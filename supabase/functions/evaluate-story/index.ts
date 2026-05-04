@@ -269,6 +269,21 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
 
     logUsage(req, "evaluate-story", aiModel, data.usage);
 
+    tracePhoenixLLMCall({
+      functionName: "evaluate-story",
+      model: aiModel,
+      provider: useGoogleDirect ? "google" : "lovable-gateway",
+      userId: getUserIdFromJwt(req.headers.get("authorization")),
+      sessionId,
+      inputMessages: messages,
+      outputContent: toolCall.function.arguments,
+      usage: data.usage,
+      startTimeMs,
+      endTimeMs: Date.now(),
+      status: "OK",
+      extraAttributes: { "context.id": contextId ?? null, "story.title": story?.title ?? null },
+    });
+
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
