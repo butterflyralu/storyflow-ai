@@ -295,6 +295,18 @@ serve(async (req) => {
     if (!response.ok) {
       const status = response.status;
       const text = await response.text();
+      tracePhoenixLLMCall({
+        functionName: "story-agent",
+        model: aiModel,
+        provider: useGoogleDirect ? "google" : "lovable-gateway",
+        userId: getUserIdFromJwt(req.headers.get("authorization")),
+        inputMessages: messages,
+        outputContent: text.slice(0, 2000),
+        startTimeMs,
+        endTimeMs: Date.now(),
+        status: "ERROR",
+        errorMessage: `HTTP ${status}`,
+      });
       console.error("AI gateway error:", status, text);
 
       if (status === 429) {
