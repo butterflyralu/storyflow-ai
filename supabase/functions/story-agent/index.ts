@@ -344,6 +344,19 @@ serve(async (req) => {
     // Log usage asynchronously (don't block response)
     logUsage(req, "story-agent", aiModel, data.usage);
 
+    tracePhoenixLLMCall({
+      functionName: "story-agent",
+      model: aiModel,
+      provider: useGoogleDirect ? "google" : "lovable-gateway",
+      userId: getUserIdFromJwt(req.headers.get("authorization")),
+      inputMessages: messages,
+      outputContent: toolCall.function.arguments,
+      usage: data.usage,
+      startTimeMs,
+      endTimeMs: Date.now(),
+      status: "OK",
+    });
+
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
