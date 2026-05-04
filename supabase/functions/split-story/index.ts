@@ -145,6 +145,11 @@ serve(async (req) => {
       },
     };
 
+    const splitMessages = [
+      { role: "system", content: SYSTEM_PROMPT + contextStr + storyStr },
+      { role: "user", content: "Split this epic into 3-6 independent user stories." },
+    ];
+    const startTimeMs = Date.now();
     const response = await fetch(
       aiUrl,
       {
@@ -155,10 +160,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: aiModel,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT + contextStr + storyStr },
-            { role: "user", content: "Split this epic into 3-6 independent user stories." },
-          ],
+          messages: splitMessages,
           tools: [toolDef],
           tool_choice: { type: "function", function: { name: "split_epic" } },
         }),
