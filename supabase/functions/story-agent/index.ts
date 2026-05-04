@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { tracePhoenixLLMCall } from "../_shared/phoenix.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -270,6 +271,7 @@ serve(async (req) => {
       },
     };
 
+    const startTimeMs = Date.now();
     const response = await fetch(
       aiUrl,
       {
@@ -293,6 +295,18 @@ serve(async (req) => {
     if (!response.ok) {
       const status = response.status;
       const text = await response.text();
+      tracePhoenixLLMCall({
+        functionName: "story-agent",
+        model: aiModel,
+        provider: useGoogleDirect ? "google" : "lovable-gateway",
+        userId: getUserIdFromJwt(req.headers.get("authorization")),
+        inputMessages: messages,
+        outputContent: text.slice(0, 2000),
+        startTimeMs,
+        endTimeMs: Date.now(),
+        status: "ERROR",
+        errorMessage: `HTTP ${status}`,
+      });
       console.error("AI gateway error:", status, text);
 
       if (status === 429) {
@@ -329,6 +343,19 @@ serve(async (req) => {
 
     // Log usage asynchronously (don't block response)
     logUsage(req, "story-agent", aiModel, data.usage);
+
+    tracePhoenixLLMCall({
+      functionName: "story-agent",
+      model: aiModel,
+      provider: useGoogleDirect ? "google" : "lovable-gateway",
+      userId: getUserIdFromJwt(req.headers.get("authorization")),
+      inputMessages: messages,
+      outputContent: toolCall.function.arguments,
+      usage: data.usage,
+      startTimeMs,
+      endTimeMs: Date.now(),
+      status: "OK",
+    });
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

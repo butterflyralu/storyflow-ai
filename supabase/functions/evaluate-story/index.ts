@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { tracePhoenixLLMCall } from "../_shared/phoenix.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -198,6 +199,7 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
       },
     };
 
+    const startTimeMs = Date.now();
     const response = await fetch(
       aiUrl,
       {
@@ -217,8 +219,22 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
 
     if (!response.ok) {
       const status = response.status;
-      const text = await response.text();
-      console.error("AI gateway error:", status, text);
+      const errText = await response.text().catch(() => "");
+      tracePhoenixLLMCall({
+        functionName: "evaluate-story",
+        model: aiModel,
+        provider: useGoogleDirect ? "google" : "lovable-gateway",
+        userId: getUserIdFromJwt(req.headers.get("authorization")),
+        sessionId,
+        inputMessages: messages,
+        outputContent: errText.slice(0, 2000),
+        startTimeMs,
+        endTimeMs: Date.now(),
+        status: "ERROR",
+        errorMessage: `HTTP ${status}`,
+        extraAttributes: { "context.id": contextId ?? null },
+      });
+      console.error("AI gateway error:", status, errText);
 
       if (status === 429) {
         return new Response(
@@ -252,6 +268,21 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
     }
 
     logUsage(req, "evaluate-story", aiModel, data.usage);
+
+    tracePhoenixLLMCall({
+      functionName: "evaluate-story",
+      model: aiModel,
+      provider: useGoogleDirect ? "google" : "lovable-gateway",
+      userId: getUserIdFromJwt(req.headers.get("authorization")),
+      sessionId,
+      inputMessages: messages,
+      outputContent: toolCall.function.arguments,
+      usage: data.usage,
+      startTimeMs,
+      endTimeMs: Date.now(),
+      status: "OK",
+      extraAttributes: { "context.id": contextId ?? null, "story.title": story?.title ?? null },
+    });
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

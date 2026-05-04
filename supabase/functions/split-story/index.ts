@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { tracePhoenixLLMCall } from "../_shared/phoenix.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -144,6 +145,11 @@ serve(async (req) => {
       },
     };
 
+    const splitMessages = [
+      { role: "system", content: SYSTEM_PROMPT + contextStr + storyStr },
+      { role: "user", content: "Split this epic into 3-6 independent user stories." },
+    ];
+    const startTimeMs = Date.now();
     const response = await fetch(
       aiUrl,
       {
@@ -154,10 +160,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: aiModel,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT + contextStr + storyStr },
-            { role: "user", content: "Split this epic into 3-6 independent user stories." },
-          ],
+          messages: splitMessages,
           tools: [toolDef],
           tool_choice: { type: "function", function: { name: "split_epic" } },
         }),
@@ -167,6 +170,19 @@ serve(async (req) => {
     if (!response.ok) {
       const status = response.status;
       const text = await response.text();
+      tracePhoenixLLMCall({
+        functionName: "split-story",
+        model: aiModel,
+        provider: useGoogleDirect ? "google" : "lovable-gateway",
+        userId: getUserIdFromJwt(req.headers.get("authorization")),
+        inputMessages: splitMessages,
+        outputContent: text.slice(0, 2000),
+        startTimeMs,
+        endTimeMs: Date.now(),
+        status: "ERROR",
+        errorMessage: `HTTP ${status}`,
+        extraAttributes: { "epic.title": story?.title ?? null },
+      });
       console.error("AI gateway error:", status, text);
 
       if (status === 429) {
@@ -202,6 +218,20 @@ serve(async (req) => {
     const parsed = JSON.parse(toolCall.function.arguments);
 
     logUsage(req, "split-story", aiModel, data.usage);
+
+    tracePhoenixLLMCall({
+      functionName: "split-story",
+      model: aiModel,
+      provider: useGoogleDirect ? "google" : "lovable-gateway",
+      userId: getUserIdFromJwt(req.headers.get("authorization")),
+      inputMessages: splitMessages,
+      outputContent: toolCall.function.arguments,
+      usage: data.usage,
+      startTimeMs,
+      endTimeMs: Date.now(),
+      status: "OK",
+      extraAttributes: { "epic.title": story?.title ?? null },
+    });
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
