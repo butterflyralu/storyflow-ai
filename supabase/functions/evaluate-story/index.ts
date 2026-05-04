@@ -199,6 +199,7 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
       },
     };
 
+    const startTimeMs = Date.now();
     const response = await fetch(
       aiUrl,
       {
@@ -218,6 +219,22 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
 
     if (!response.ok) {
       const status = response.status;
+      const errText = await response.text().catch(() => "");
+      tracePhoenixLLMCall({
+        functionName: "evaluate-story",
+        model: aiModel,
+        provider: useGoogleDirect ? "google" : "lovable-gateway",
+        userId: getUserIdFromJwt(req.headers.get("authorization")),
+        sessionId,
+        inputMessages: messages,
+        outputContent: errText.slice(0, 2000),
+        startTimeMs,
+        endTimeMs: Date.now(),
+        status: "ERROR",
+        errorMessage: `HTTP ${status}`,
+        extraAttributes: { "context.id": contextId ?? null },
+      });
+      console.error("AI gateway error:", status, errText);
       const text = await response.text();
       console.error("AI gateway error:", status, text);
 
