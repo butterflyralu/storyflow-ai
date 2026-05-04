@@ -235,8 +235,6 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
         extraAttributes: { "context.id": contextId ?? null },
       });
       console.error("AI gateway error:", status, errText);
-      const text = await response.text();
-      console.error("AI gateway error:", status, text);
 
       if (status === 429) {
         return new Response(
