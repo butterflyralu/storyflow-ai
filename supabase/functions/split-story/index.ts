@@ -170,6 +170,19 @@ serve(async (req) => {
     if (!response.ok) {
       const status = response.status;
       const text = await response.text();
+      tracePhoenixLLMCall({
+        functionName: "split-story",
+        model: aiModel,
+        provider: useGoogleDirect ? "google" : "lovable-gateway",
+        userId: getUserIdFromJwt(req.headers.get("authorization")),
+        inputMessages: splitMessages,
+        outputContent: text.slice(0, 2000),
+        startTimeMs,
+        endTimeMs: Date.now(),
+        status: "ERROR",
+        errorMessage: `HTTP ${status}`,
+        extraAttributes: { "epic.title": story?.title ?? null },
+      });
       console.error("AI gateway error:", status, text);
 
       if (status === 429) {
