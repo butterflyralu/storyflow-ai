@@ -219,6 +219,20 @@ serve(async (req) => {
 
     logUsage(req, "split-story", aiModel, data.usage);
 
+    tracePhoenixLLMCall({
+      functionName: "split-story",
+      model: aiModel,
+      provider: useGoogleDirect ? "google" : "lovable-gateway",
+      userId: getUserIdFromJwt(req.headers.get("authorization")),
+      inputMessages: splitMessages,
+      outputContent: toolCall.function.arguments,
+      usage: data.usage,
+      startTimeMs,
+      endTimeMs: Date.now(),
+      status: "OK",
+      extraAttributes: { "epic.title": story?.title ?? null },
+    });
+
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
