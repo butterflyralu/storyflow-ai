@@ -271,6 +271,7 @@ serve(async (req) => {
       },
     };
 
+    const startTimeMs = Date.now();
     const response = await fetch(
       aiUrl,
       {
