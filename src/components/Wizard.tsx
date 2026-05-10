@@ -122,8 +122,16 @@ export function Wizard() {
               )
             )}
 
-            {step === 3 && <ProductContextSettings />}
-            {step === 4 && <ProductContextList />}
+            {step === 3 && (
+              <div className="h-full overflow-y-auto overscroll-y-contain">
+                <ProductContextSettings />
+              </div>
+            )}
+            {step === 4 && (
+              <div className="h-full overflow-y-auto overscroll-y-contain">
+                <ProductContextList />
+              </div>
+            )}
           </main>
         </div>
       </div>
