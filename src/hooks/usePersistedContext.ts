@@ -36,7 +36,7 @@ export function usePersistedContext() {
         strategy: ctx.strategy,
         objectives: ctx.objectives,
         ac_format: ctx.acFormat,
-        dor_rules: ctx.dorRules ?? DEFAULT_DOR_RULES,
+        dor_rules: (ctx.dorRules ?? DEFAULT_DOR_RULES) as any,
       })
       .select('id')
       .maybeSingle();
@@ -61,7 +61,7 @@ export function usePersistedContext() {
         strategy: ctx.strategy,
         objectives: ctx.objectives,
         ac_format: ctx.acFormat,
-        dor_rules: ctx.dorRules ?? DEFAULT_DOR_RULES,
+        dor_rules: (ctx.dorRules ?? DEFAULT_DOR_RULES) as any,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
