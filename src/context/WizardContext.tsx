@@ -33,6 +33,7 @@ interface WizardActions {
   setStory: (story: StoryDraft) => void;
   addMessage: (msg: UIChatMessage) => void;
   setChatHistory: (msgs: UIChatMessage[]) => void;
+  updateMessage: (id: string, update: Partial<UIChatMessage>) => void;
   setDbSessionId: (id: string | null) => void;
   setEvaluation: (result: EvaluateResponse | null) => void;
   saveStory: (story: StoryDraft) => void;
