@@ -176,11 +176,50 @@ function EmptyStoryState() {
 }
 
 export function StoryPreview() {
-  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setPendingSplitStories, setEpicSummary } = useWizard();
+  const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setPendingSplitStories, setEpicSummary, contextId, sessionId, dbSessionId } = useWizard();
   const [saving, setSaving] = useState(false);
   const [splitting, setSplitting] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
   const [appliedFields, setAppliedFields] = useState<Set<StoryField>>(new Set());
   const [dismissedCriteria, setDismissedCriteria] = useState<Set<string>>(new Set());
+
+  const handleEvaluate = async () => {
+    setEvaluating(true);
+    const evalMsg = {
+      id: String(Date.now()),
+      role: 'assistant' as const,
+      content: '⏳ Running quality evaluation...',
+    };
+    addMessage(evalMsg);
+    try {
+      const evalResult = await api.evaluateStory({
+        sessionId,
+        contextId: contextId || '',
+        story,
+      });
+      setEvaluation(evalResult);
+      setAppliedFields(new Set());
+      setDismissedCriteria(new Set());
+      try {
+        const { saveGeneratedStory } = await import('@/hooks/useStorySaver');
+        await saveGeneratedStory(story, { contextId, sessionId: dbSessionId, evaluation: evalResult });
+      } catch {}
+      addMessage({
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        content: '✅ Evaluation complete — check the annotations in your story draft on the right.',
+      });
+    } catch (e) {
+      addMessage({
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        content: '⚠️ Evaluation failed. Please try again.',
+      });
+      toast({ title: 'Evaluation failed', description: e instanceof Error ? e.message : 'Unknown error', variant: 'destructive' });
+    } finally {
+      setEvaluating(false);
+    }
+  };
 
   // Check if story has any content
   const hasContent = !!(story.title || story.asA || story.iWant || story.soThat || story.description);
