@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors, FileText, ClipboardList } from 'lucide-react';
+import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors, FileText, ClipboardList, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
