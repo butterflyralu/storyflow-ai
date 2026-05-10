@@ -95,7 +95,7 @@ export function AppSidebar() {
 
   useEffect(() => {
     refreshContexts();
-  }, []);
+  }, [sidebarRefreshKey]);
 
   // Load sessions for current context
   const refreshSessions = useCallback(async () => {
