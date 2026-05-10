@@ -23,12 +23,16 @@ export function usePersistedChat() {
 
   const saveMessage = useCallback(async (sessionId: string, msg: UIChatMessage) => {
     if (!user) return;
+    // Encode either an options array or an inline wizard payload into the jsonb `options` column.
+    const payload = msg.wizard
+      ? { __wizard: msg.wizard }
+      : (msg.options ?? null);
     await supabase.from('chat_messages').insert({
       session_id: sessionId,
       user_id: user.id,
       role: msg.role,
       content: msg.content,
-      options: msg.options ?? null,
+      options: payload as any,
     });
   }, [user]);
 
