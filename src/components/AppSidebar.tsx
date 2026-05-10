@@ -485,6 +485,15 @@ export function AppSidebar() {
             variant="ghost"
             size="sm"
             className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => window.open('/user-manual', '_blank')}
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            User Manual
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
             onClick={() => window.open('/faq', '_blank')}
           >
             <HelpCircle className="h-3.5 w-3.5" />
