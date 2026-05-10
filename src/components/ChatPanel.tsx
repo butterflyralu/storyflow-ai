@@ -40,7 +40,7 @@ export function ChatPanel() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const storyRef = useRef(story);
   storyRef.current = story;
-  const { createSession, saveMessage, updateSessionTitle } = usePersistedChat();
+  const { createSession, saveMessage, updateMessageOptions, updateSessionTitle } = usePersistedChat();
   const { saveGeneratedStory } = useStorySaver();
   const sessionTitleRef = useRef<string>('');
 
@@ -244,7 +244,14 @@ export function ChatPanel() {
           : null,
       };
       addMessage(aiMsg);
-      if (dbSid) saveMessage(dbSid, aiMsg);
+      if (dbSid) {
+        const dbId = await saveMessage(dbSid, aiMsg);
+        // For wizard messages, swap the local id to the DB id so subsequent
+        // step/answer updates can be persisted by message id.
+        if (hasWizard && dbId) {
+          updateMessage(aiMsg.id, { id: dbId } as any);
+        }
+      }
 
       if (response.awaitingCriteriaConfirmation) {
         const confirmLower = text.toLowerCase();
@@ -354,9 +361,10 @@ export function ChatPanel() {
                       initialIndex={msg.wizard!.currentIndex}
                       completed={msg.wizard!.completed}
                       onStateChange={(state) => {
-                        updateMessage(msg.id, {
-                          wizard: { questions: msg.wizard!.questions, ...state },
-                        });
+                        const nextWizard = { questions: msg.wizard!.questions, ...state };
+                        updateMessage(msg.id, { wizard: nextWizard });
+                        // Persist resume state across refreshes / sessions.
+                        updateMessageOptions(msg.id, { __wizard: nextWizard });
                       }}
                       onComplete={(answers, skippedAll) => {
                         const lines = msg.wizard!.questions

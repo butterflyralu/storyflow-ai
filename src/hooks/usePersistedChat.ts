@@ -21,19 +21,32 @@ export function usePersistedChat() {
     return data?.id ?? null;
   }, [user]);
 
-  const saveMessage = useCallback(async (sessionId: string, msg: UIChatMessage) => {
-    if (!user) return;
+  const saveMessage = useCallback(async (sessionId: string, msg: UIChatMessage): Promise<string | null> => {
+    if (!user) return null;
     // Encode either an options array or an inline wizard payload into the jsonb `options` column.
     const payload = msg.wizard
       ? { __wizard: msg.wizard }
       : (msg.options ?? null);
-    await supabase.from('chat_messages').insert({
+    const { data } = await supabase.from('chat_messages').insert({
       session_id: sessionId,
       user_id: user.id,
       role: msg.role,
       content: msg.content,
       options: payload as any,
-    });
+    }).select('id').single();
+    return data?.id ?? null;
+  }, [user]);
+
+  const updateMessageOptions = useCallback(async (
+    messageId: string,
+    payload: unknown,
+  ) => {
+    if (!user) return;
+    await supabase
+      .from('chat_messages')
+      .update({ options: payload as any })
+      .eq('id', messageId)
+      .eq('user_id', user.id);
   }, [user]);
 
   const updateSessionTitle = useCallback(async (sessionId: string, title: string) => {
@@ -78,5 +91,5 @@ export function usePersistedChat() {
     });
   }, [user]);
 
-  return { createSession, saveMessage, updateSessionTitle, loadSessions, loadMessages };
+  return { createSession, saveMessage, updateMessageOptions, updateSessionTitle, loadSessions, loadMessages };
 }
