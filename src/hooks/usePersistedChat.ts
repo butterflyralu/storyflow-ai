@@ -67,7 +67,28 @@ export function usePersistedChat() {
       .order('updated_at', { ascending: false });
     if (contextId) query = query.eq('context_id', contextId);
     const { data } = await query;
-    return data ?? [];
+    const sessions = data ?? [];
+    if (sessions.length === 0) return [];
+
+    const sessionIds = sessions.map((s: any) => s.id);
+    const { data: storyRows } = await supabase
+      .from('generated_stories')
+      .select('session_id, evaluation_result, created_at')
+      .in('session_id', sessionIds)
+      .order('created_at', { ascending: false });
+
+    const latestBySession = new Map<string, 'PASS' | 'FAIL' | null>();
+    (storyRows ?? []).forEach((r: any) => {
+      if (!latestBySession.has(r.session_id)) {
+        latestBySession.set(r.session_id, (r.evaluation_result as 'PASS' | 'FAIL') ?? null);
+      }
+    });
+
+    return sessions.map((s: any) => ({
+      ...s,
+      evaluation_status: latestBySession.has(s.id) ? latestBySession.get(s.id) ?? null : null,
+      has_story: latestBySession.has(s.id),
+    }));
   }, [user]);
 
   const loadMessages = useCallback(async (sessionId: string): Promise<UIChatMessage[]> => {
