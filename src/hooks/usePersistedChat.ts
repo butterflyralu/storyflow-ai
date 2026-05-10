@@ -65,12 +65,17 @@ export function usePersistedChat() {
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
     if (!data) return [];
-    return data.map((m: any) => ({
-      id: m.id,
-      role: m.role,
-      content: m.content,
-      options: m.options,
-    }));
+    return data.map((m: any) => {
+      const opts = m.options;
+      const isWizard = opts && !Array.isArray(opts) && opts.__wizard;
+      return {
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        options: isWizard ? null : (Array.isArray(opts) ? opts : null),
+        wizard: isWizard ? opts.__wizard : null,
+      };
+    });
   }, [user]);
 
   return { createSession, saveMessage, updateSessionTitle, loadSessions, loadMessages };
