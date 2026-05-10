@@ -4,6 +4,7 @@ import { api } from '@/services/api';
 import type { UIChatMessage } from '@/types/wizard';
 import { EMPTY_STORY } from '@/types/wizard';
 import { OptionTiles } from '@/components/OptionTiles';
+import { ClarificationWizard } from '@/components/ClarificationWizard';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MarkdownText } from '@/components/MarkdownText';
 import { Button } from '@/components/ui/button';
