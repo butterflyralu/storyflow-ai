@@ -231,9 +231,21 @@ export function ChatPanel() {
 
       // If user already confirmed at the criteria-confirmation gate, skip the
       // redundant "Here's the complete draft…" bubble and go straight to eval.
-      const confirmLower = text.toLowerCase();
-      const isConfirm = confirmLower.includes('yes') || confirmLower.includes('looks good') || confirmLower.includes('good');
-      const skipAiBubble = response.awaitingCriteriaConfirmation && isConfirm;
+      const confirmLower = text.toLowerCase().trim();
+      const isConfirm =
+        confirmLower.includes('yes') ||
+        confirmLower.includes('looks good') ||
+        confirmLower === 'good' ||
+        confirmLower.startsWith('evaluate');
+      const draftHasAc =
+        Array.isArray(response.storyDraft?.acceptanceCriteria) &&
+        response.storyDraft.acceptanceCriteria.some(
+          (g: any) => Array.isArray(g?.items) && g.items.length > 0
+        );
+      const shouldEvaluate =
+        (response.awaitingCriteriaConfirmation && isConfirm) ||
+        (isConfirm && draftHasAc);
+      const skipAiBubble = shouldEvaluate;
 
       if (!skipAiBubble) {
         const aiMsg: UIChatMessage = {
@@ -259,38 +271,36 @@ export function ChatPanel() {
         }
       }
 
-      if (response.awaitingCriteriaConfirmation) {
-        if (isConfirm) {
-          setLoading(true);
-          const evalMsg: UIChatMessage = {
-            id: String(Date.now() + 2),
+      if (shouldEvaluate) {
+        setLoading(true);
+        const evalMsg: UIChatMessage = {
+          id: String(Date.now() + 2),
+          role: 'assistant',
+          content: '⏳ Running quality evaluation...',
+        };
+        addMessage(evalMsg);
+        try {
+          const evalResult = await api.evaluateStory({
+            sessionId,
+            contextId: contextId || '',
+            story: response.storyDraft,
+          });
+          setEvaluation(evalResult);
+          await saveGeneratedStory(response.storyDraft, { contextId, sessionId: dbSid, evaluation: evalResult });
+          addMessage({
+            id: String(Date.now() + 4),
             role: 'assistant',
-            content: '⏳ Running quality evaluation...',
-          };
-          addMessage(evalMsg);
-          try {
-            const evalResult = await api.evaluateStory({
-              sessionId,
-              contextId: contextId || '',
-              story: response.storyDraft,
-            });
-            setEvaluation(evalResult);
-            await saveGeneratedStory(response.storyDraft, { contextId, sessionId: dbSid, evaluation: evalResult });
-            addMessage({
-              id: String(Date.now() + 4),
-              role: 'assistant',
-              content: '✅ Evaluation complete — check the annotations in your story draft on the right.',
-            });
-          } catch {
-            addMessage({
-              id: String(Date.now() + 3),
-              role: 'assistant',
-              content: 'Evaluation failed. You can try again.',
-              options: [{ label: 'Yes, looks good' }],
-            });
-          }
-          return;
+            content: '✅ Evaluation complete — check the annotations in your story draft on the right.',
+          });
+        } catch {
+          addMessage({
+            id: String(Date.now() + 3),
+            role: 'assistant',
+            content: 'Evaluation failed. You can try again.',
+            options: [{ label: 'Yes, looks good' }],
+          });
         }
+        return;
       }
     } catch (err: any) {
       const rawMsg = err?.message || '';
