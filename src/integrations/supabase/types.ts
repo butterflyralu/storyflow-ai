@@ -266,6 +266,7 @@ export type Database = {
         Row: {
           ac_format: string
           created_at: string
+          dor_rules: Json
           id: string
           industry: string
           mission: string
@@ -284,6 +285,7 @@ export type Database = {
         Insert: {
           ac_format?: string
           created_at?: string
+          dor_rules?: Json
           id?: string
           industry?: string
           mission?: string
@@ -302,6 +304,7 @@ export type Database = {
         Update: {
           ac_format?: string
           created_at?: string
+          dor_rules?: Json
           id?: string
           industry?: string
           mission?: string
