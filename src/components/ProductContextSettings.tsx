@@ -76,6 +76,7 @@ export function ProductContextSettings() {
     if (success) {
       setProductContext(values);
       setSaved(true);
+      triggerSidebarRefresh();
       toast({ title: 'Context saved', description: 'Your product context has been updated.' });
       setTimeout(() => setSaved(false), 2000);
     } else {
