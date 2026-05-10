@@ -309,12 +309,21 @@ export function StoryPreview() {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-lg">Story Draft</CardTitle>
           <div className="flex items-center gap-2 flex-wrap">
-            {evaluation && (
+            {evaluation && (() => {
+              const passed = evaluation.scorecard.filter(i => i.result === 'PASS').length;
+              const caveats = evaluation.scorecard.filter(i => i.result === 'PASS_WITH_CAVEAT').length;
+              const failed = evaluation.scorecard.filter(i => i.result === 'FAIL').length;
+              const summary = [
+                passed > 0 && `${passed} passed`,
+                caveats > 0 && `${caveats} with caveats`,
+                failed > 0 && `${failed} failed`,
+              ].filter(Boolean).join(' · ');
+              return (
               <Popover>
                 <PopoverTrigger asChild>
                   <button type="button" className="inline-flex">
                     <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-xs cursor-pointer gap-1 hover:opacity-80 transition-opacity">
-                      {evaluation.scorecard.filter(i => i.result === 'PASS').length}/{evaluation.scorecard.length} passed
+                      {summary || '0 evaluated'}
                       <Info className="h-3 w-3" />
                     </Badge>
                   </button>
@@ -322,21 +331,30 @@ export function StoryPreview() {
                 <PopoverContent side="bottom" align="end" className="max-w-sm p-4">
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Evaluation Scorecard</div>
                   <div className="space-y-2 text-xs">
-                    {evaluation.scorecard.map((item, i) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <span className={item.result === 'PASS' ? 'text-green-500' : 'text-destructive'}>
-                          {item.result === 'PASS' ? '✓' : '✗'}
-                        </span>
-                        <div>
-                          <span className="font-medium">{item.framework} – {item.criterion}</span>
-                          <p className="text-muted-foreground">{item.explanation}</p>
+                    {evaluation.scorecard.map((item, i) => {
+                      const isPass = item.result === 'PASS';
+                      const isCaveat = item.result === 'PASS_WITH_CAVEAT';
+                      const symbol = isPass ? '✓' : isCaveat ? '⚠' : '✗';
+                      const colorClass = isPass
+                        ? 'text-green-500'
+                        : isCaveat
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-destructive';
+                      return (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className={colorClass}>{symbol}</span>
+                          <div>
+                            <span className="font-medium">{item.framework} – {item.criterion}</span>
+                            <p className="text-muted-foreground">{item.explanation}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </PopoverContent>
               </Popover>
-            )}
+              );
+            })()}
             {(() => {
               const st = getEvalStatus(evaluation?.overallResult as any);
               return (

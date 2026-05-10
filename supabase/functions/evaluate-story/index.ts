@@ -53,24 +53,36 @@ You are a user story quality evaluator. You receive a user story draft and evalu
 
 ## Evaluation Frameworks
 
+## Verdict values
+Each criterion gets one of three verdicts:
+- **PASS** — fully meets the criterion with no caveats.
+- **PASS_WITH_CAVEAT** — meets the criterion but with a noted limitation, soft dependency, or condition that the team should be aware of.
+- **FAIL** — does not meet the criterion.
+
 ### INVEST
 Evaluate each criterion:
-- **Independent** – Can this story be developed and delivered without depending on other stories?
-- **Negotiable** – Is the story flexible enough to allow discussion about implementation details?
+- **Independent** — Distinguish hard vs soft dependencies.
+  - **FAIL (hard dependency):** the story cannot be started or tested until another specific story is complete. The rationale MUST name the blocking story or capability.
+  - **PASS_WITH_CAVEAT (soft dependency):** the story assumes some infrastructure or context exists but can be developed and tested independently. The rationale MUST name the assumed dependency.
+  - **PASS:** truly self-contained.
+- **Negotiable** — If the story is specific enough that there is little room for implementation discussion without grooming, return **PASS_WITH_CAVEAT** and state in the rationale what still needs to be discussed. Reserve **PASS** for stories that genuinely leave implementation open. **FAIL** if the story is so prescriptive it dictates implementation.
 - **Valuable** – Does the "so that" clause clearly state a measurable user or business outcome?
 - **Estimable** – Is there enough detail for the team to estimate effort?
-- **Small** – Can this story be completed within a single sprint?
+- **Small** — A story clearly completable within a single sprint is **PASS**. A borderline story (completable in a sprint but at the upper edge of acceptable scope) is **PASS_WITH_CAVEAT** with a rationale stating what makes it borderline. A story that clearly spans multiple sprints is **FAIL**.
 - **Testable** – Do the acceptance criteria have clear, measurable pass/fail conditions?
 
 ### Definition of Ready (DoR)
 - **Acceptance Criteria** – Are acceptance criteria present, grouped, and specific?
 - **Description** – Is the description clear and sufficient for development?
 
+## Verdict consistency rule (STRICT)
+If your rationale describes a limitation, caveat, or condition for any criterion, the verdict MUST reflect that — use **PASS_WITH_CAVEAT** or **FAIL**, never **PASS**. A PASS verdict paired with a caveat in the rationale is a contradiction and is invalid output.
+
 ## Output Requirements
 
-For each criterion that FAILS, provide:
-1. A specific, actionable explanation of what's wrong
-2. In the improvedStory, provide a concrete fix for the failing field
+For each criterion that is **FAIL** or **PASS_WITH_CAVEAT**, provide:
+1. A specific, actionable explanation of what's wrong or what the caveat is.
+2. For **FAIL**, in the improvedStory provide a concrete fix for the failing field.
 
 For PASS criteria, provide a brief confirmation.
 
@@ -170,7 +182,7 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
                 properties: {
                   framework: { type: "string", enum: ["INVEST", "DoR"] },
                   criterion: { type: "string" },
-                  result: { type: "string", enum: ["PASS", "FAIL"] },
+                  result: { type: "string", enum: ["PASS", "PASS_WITH_CAVEAT", "FAIL"] },
                   explanation: { type: "string" },
                 },
                 required: ["framework", "criterion", "result", "explanation"],

@@ -4,15 +4,29 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check, X, AlertTriangle, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getVerdictVariant } from '@/lib/evalStatus';
 
 export function EvaluationCard() {
   const { evaluation, setStep, setStory, story } = useWizard();
 
   if (!evaluation) return null;
 
-  const passCount = evaluation.scorecard.filter(c => c.result === 'PASS').length;
-  const total = evaluation.scorecard.length;
+  const passed = evaluation.scorecard.filter(c => c.result === 'PASS').length;
+  const caveats = evaluation.scorecard.filter(c => c.result === 'PASS_WITH_CAVEAT').length;
+  const failed = evaluation.scorecard.filter(c => c.result === 'FAIL').length;
   const failures = evaluation.scorecard.filter(c => c.result === 'FAIL');
+
+  const summary = [
+    passed > 0 && `${passed} passed`,
+    caveats > 0 && `${caveats} with caveats`,
+    failed > 0 && `${failed} failed`,
+  ].filter(Boolean).join(' · ');
+
+  const renderIcon = (icon: 'check' | 'warning' | 'x') => {
+    if (icon === 'check') return <Check className="h-3.5 w-3.5" />;
+    if (icon === 'warning') return <AlertTriangle className="h-3.5 w-3.5" />;
+    return <X className="h-3.5 w-3.5" />;
+  };
 
   return (
     <div className="space-y-4">
@@ -21,50 +35,55 @@ export function EvaluationCard() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Quality Score</CardTitle>
-            <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'}>
-              {passCount}/{total} passed
-            </Badge>
+            {summary && (
+              <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'}>
+                {summary}
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
-          {evaluation.scorecard.map((item, i) => (
-            <div
-              key={i}
-              className={cn(
-                'rounded-lg p-3',
-                item.result === 'PASS' ? 'bg-primary/5' : 'bg-destructive/5',
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full',
-                    item.result === 'PASS' ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive',
-                  )}
-                >
-                  {item.result === 'PASS' ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <span>{item.criterion}</span>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{item.framework}</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">{item.explanation}</div>
-                </div>
-                {item.result === 'FAIL' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
-                    onClick={() => setStep(2)}
+          {evaluation.scorecard.map((item, i) => {
+            const v = getVerdictVariant(item.result);
+            const showRationale = item.result !== 'PASS';
+            return (
+              <div
+                key={i}
+                className={cn('rounded-lg p-3', v.rowBg)}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full',
+                      v.iconBg,
+                    )}
                   >
-                    <Pencil className="h-3 w-3" />
-                    Fix
-                  </Button>
-                )}
+                    {renderIcon(v.icon)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <span>{item.criterion}</span>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{item.framework}</Badge>
+                    </div>
+                    {showRationale && (
+                      <div className="text-xs text-muted-foreground">{item.explanation}</div>
+                    )}
+                  </div>
+                  {item.result === 'FAIL' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
+                      onClick={() => setStep(2)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Fix
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
