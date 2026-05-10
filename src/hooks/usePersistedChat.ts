@@ -91,5 +91,5 @@ export function usePersistedChat() {
     });
   }, [user]);
 
-  return { createSession, saveMessage, updateSessionTitle, loadSessions, loadMessages };
+  return { createSession, saveMessage, updateMessageOptions, updateSessionTitle, loadSessions, loadMessages };
 }
