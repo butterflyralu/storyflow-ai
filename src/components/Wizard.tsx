@@ -66,9 +66,6 @@ export function Wizard() {
                   </h1>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="hidden sm:block rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
-                    AI Story Assistant
-                  </div>
                   {user && (
                     <div className="flex items-center gap-2">
                       <span className="hidden sm:block text-xs text-muted-foreground truncate max-w-[150px]">
