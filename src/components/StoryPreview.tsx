@@ -201,7 +201,6 @@ export function StoryPreview() {
       setAppliedFields(new Set());
       setDismissedCriteria(new Set());
       try {
-        const { saveGeneratedStory } = await import('@/hooks/useStorySaver');
         await saveGeneratedStory(story, { contextId, sessionId: dbSessionId, evaluation: evalResult });
       } catch {}
       addMessage({
