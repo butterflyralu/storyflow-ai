@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FAQ from "./pages/FAQ";
+import UserManual from "./pages/UserManual";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -41,6 +42,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/user-manual" element={<UserManual />} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

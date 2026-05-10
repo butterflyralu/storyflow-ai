@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MessageSquare, Plus, Settings, Loader2, HelpCircle, BarChart3, ChevronDown, Layers, FileText, Search, Trash2, Package } from 'lucide-react';
+import { MessageSquare, Plus, Settings, Loader2, HelpCircle, BarChart3, ChevronDown, Layers, FileText, Search, Trash2, Package, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
@@ -481,6 +481,15 @@ export function AppSidebar() {
               AI Quality Dashboard
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => window.open('/user-manual', '_blank')}
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            User Manual
+          </Button>
           <Button
             variant="ghost"
             size="sm"
