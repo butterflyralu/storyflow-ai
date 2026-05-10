@@ -277,6 +277,41 @@ serve(async (req) => {
               items: { type: "number" },
               description: "1-based indices of pending split stories the user confirmed to keep. Only set when the user has confirmed their selection from pending split stories.",
             },
+            clarificationWizard: {
+              type: "object",
+              description: "Optional. Set ONLY for complex stories to launch an inline stepped clarification wizard with 4–6 targeted questions, asked one at a time in the UI.",
+              properties: {
+                questions: {
+                  type: "array",
+                  description: "Between 4 and 6 targeted clarifying questions. Each must be specific and actionable.",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string", description: "Stable short id, e.g. 'q1'." },
+                      question: { type: "string" },
+                      options: {
+                        type: "array",
+                        description: "0–4 short answer chips when the answer space is enumerable.",
+                        items: {
+                          type: "object",
+                          properties: { label: { type: "string" } },
+                          required: ["label"],
+                          additionalProperties: false,
+                        },
+                      },
+                      allowFreeText: {
+                        type: "boolean",
+                        description: "Whether the user can also type a free-text answer. Default true.",
+                      },
+                    },
+                    required: ["id", "question"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["questions"],
+              additionalProperties: false,
+            },
           },
           required: ["message", "options", "awaitingCriteriaConfirmation", "storyDraft"],
           additionalProperties: false,
