@@ -151,7 +151,7 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
         contextId, setContextId,
         sessionId, dbSessionId, setDbSessionId,
         story, updateStory, setStory,
-        chatHistory, addMessage, setChatHistory,
+        chatHistory, addMessage, setChatHistory, updateMessage,
         evaluation, setEvaluation,
         savedStories, saveStory,
         resetStory,
