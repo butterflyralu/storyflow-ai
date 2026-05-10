@@ -219,6 +219,7 @@ serve(async (req) => {
           tools: [toolDef],
           tool_choice: { type: "function", function: { name: "split_epic" } },
         }),
+        signal: AbortSignal.timeout(30_000),
       }
     );
 
