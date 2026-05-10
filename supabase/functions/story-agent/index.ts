@@ -397,6 +397,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: aiModel,
+          max_tokens: 2048,
           messages,
           tools: [toolDef],
           tool_choice: {
