@@ -185,6 +185,15 @@ serve(async (req) => {
       });
     }
 
+    const MAX_BODY_BYTES = 64 * 1024;
+    const cl = Number(req.headers.get("content-length") || 0);
+    if (cl > MAX_BODY_BYTES) {
+      return new Response(JSON.stringify({ error: "Request body too large (max 64KB)" }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { message, agentContext, history, storyDraft } = await req.json();
 
     const GOOGLE_GEMINI_API_KEY = Deno.env.get("GOOGLE_GEMINI_API_KEY");
