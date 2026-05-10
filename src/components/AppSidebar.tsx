@@ -429,16 +429,21 @@ export function AppSidebar() {
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <div className="ml-5 border-l border-border pl-2 space-y-0.5 py-1">
-                              {epic.stories.map(story => (
-                                <button
-                                  key={story.id}
-                                  onClick={() => handleSelectStory(story.id)}
-                                  className="flex w-full items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 hover:text-foreground transition-colors text-left"
-                                >
-                                  <FileText className="h-3 w-3 flex-shrink-0" />
-                                  <span className="truncate">{story.title}</span>
-                                </button>
-                              ))}
+                              {epic.stories.map(story => {
+                                const st = getEvalStatus(story.evaluation_result);
+                                return (
+                                  <button
+                                    key={story.id}
+                                    onClick={() => handleSelectStory(story.id)}
+                                    className="flex w-full items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 hover:text-foreground transition-colors text-left"
+                                    title={st.tooltip}
+                                  >
+                                    <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', st.dotClass)} />
+                                    <FileText className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate">{story.title}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           </CollapsibleContent>
                         </Collapsible>
