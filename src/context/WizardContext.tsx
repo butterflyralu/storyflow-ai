@@ -82,6 +82,10 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     setChatHistory(prev => [...prev, msg]);
   }, []);
 
+  const updateMessage = useCallback((id: string, update: Partial<UIChatMessage>) => {
+    setChatHistory(prev => prev.map(m => (m.id === id ? { ...m, ...update } : m)));
+  }, []);
+
   const saveStory = useCallback((s: StoryDraft) => {
     setSavedStories(prev => [...prev, s]);
   }, []);
