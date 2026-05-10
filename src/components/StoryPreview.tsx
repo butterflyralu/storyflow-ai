@@ -10,6 +10,7 @@ import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors, FileText, 
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 import { useStorySaver } from '@/hooks/useStorySaver';
+import { getEvalStatus } from '@/lib/evalStatus';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 import {
   DropdownMenu,
