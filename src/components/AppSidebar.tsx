@@ -418,13 +418,14 @@ export function AppSidebar() {
                           <CollapsibleContent>
                             <div className="ml-5 border-l border-border pl-2 space-y-0.5 py-1">
                               {epic.stories.map(story => (
-                                <div
+                                <button
                                   key={story.id}
-                                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 transition-colors"
+                                  onClick={() => handleSelectStory(story.id)}
+                                  className="flex w-full items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 hover:text-foreground transition-colors text-left"
                                 >
                                   <FileText className="h-3 w-3 flex-shrink-0" />
                                   <span className="truncate">{story.title}</span>
-                                </div>
+                                </button>
                               ))}
                             </div>
                           </CollapsibleContent>
