@@ -255,6 +255,7 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
           tools: [toolDef],
           tool_choice: { type: "function", function: { name: "return_evaluation" } },
         }),
+        signal: AbortSignal.timeout(30_000),
       }
     );
 
