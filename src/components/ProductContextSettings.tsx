@@ -176,6 +176,72 @@ export function ProductContextSettings() {
                 className="min-h-[70px] resize-none rounded-xl" />
             </FieldGroup>
 
+            <FieldGroup label="Definition of Ready Rules">
+              <p className="-mt-1 text-xs text-muted-foreground">
+                Criteria the evaluator checks against your stories. You can rename, edit, or remove the defaults.
+              </p>
+              <div className="space-y-3">
+                {(values.dorRules ?? []).map((rule, idx) => (
+                  <div key={rule.id} className="rounded-2xl border border-border bg-card p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Input
+                        value={rule.name}
+                        onChange={e => {
+                          const next = [...(values.dorRules ?? [])];
+                          next[idx] = { ...next[idx], name: e.target.value };
+                          set('dorRules', next);
+                        }}
+                        placeholder="Rule name (e.g., Acceptance Criteria)"
+                        className="rounded-xl"
+                      />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button type="button" variant="ghost" size="icon"
+                            className="rounded-xl shrink-0 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove this DoR rule?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              "{rule.name || 'Untitled rule'}" will no longer be checked during story evaluation.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => set('dorRules', (values.dorRules ?? []).filter((_, i) => i !== idx))}>
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                    <Textarea
+                      value={rule.description}
+                      onChange={e => {
+                        const next = [...(values.dorRules ?? [])];
+                        next[idx] = { ...next[idx], description: e.target.value };
+                        set('dorRules', next);
+                      }}
+                      placeholder="What does this rule require? (shown to the evaluator)"
+                      className="min-h-[60px] resize-none rounded-xl text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => set('dorRules', [
+                  ...(values.dorRules ?? []),
+                  { id: crypto.randomUUID(), name: '', description: '' } as DorRule,
+                ])}
+                className="rounded-xl gap-1.5 mt-1">
+                <Plus className="h-3.5 w-3.5" />
+                Add rule
+              </Button>
+            </FieldGroup>
+
             <FieldGroup label="Acceptance Criteria Format">
               <TileSelect<'plain' | 'gherkin'> value={values.acFormat} onChange={v => set('acFormat', v)}
                 options={[
@@ -186,7 +252,8 @@ export function ProductContextSettings() {
           </div>
 
           <div className="mt-8 flex justify-end">
-            <Button onClick={handleSave} disabled={saving || !values.productName.trim()}
+            <Button onClick={handleSave}
+              disabled={saving || !values.productName.trim() || (values.dorRules ?? []).some(r => !r.name.trim())}
               className={cn('rounded-xl px-6 gap-2 transition-all duration-200', !saving && 'shadow-soft')}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
               {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Changes'}
