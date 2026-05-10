@@ -25,7 +25,7 @@ import {
 
 export function ChatPanel() {
   const {
-    chatHistory, addMessage, setChatHistory, story, updateStory, setStory,
+    chatHistory, addMessage, setChatHistory, updateMessage, story, updateStory, setStory,
     productContext, contextId, sessionId,
     setEvaluation, setStep, saveStory, resetStory,
     pendingSplitStories, confirmSplitStories, clearPendingSplit,
