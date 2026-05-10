@@ -53,7 +53,7 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 }
 
 export function ProductContextSettings() {
-  const { productContext, setProductContext, contextId, setStep } = useWizard();
+  const { productContext, setProductContext, contextId, setStep, triggerSidebarRefresh } = useWizard();
   const { updateContext, saveContext: saveNewContext } = usePersistedContext();
   const { toast } = useToast();
   const [values, setValues] = useState<ProductContextInput>({ ...productContext });
