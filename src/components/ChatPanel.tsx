@@ -229,33 +229,37 @@ export function ChatPanel() {
       const wizardPayload = (response as any).clarificationWizard;
       const hasWizard = wizardPayload?.questions?.length >= 2;
 
-      const aiMsg: UIChatMessage = {
-        id: String(Date.now() + 1),
-        role: 'assistant',
-        content: response.message,
-        options: hasWizard ? null : response.options,
-        wizard: hasWizard
-          ? {
-              questions: wizardPayload.questions,
-              answers: {},
-              currentIndex: 0,
-              completed: false,
-            }
-          : null,
-      };
-      addMessage(aiMsg);
-      if (dbSid) {
-        const dbId = await saveMessage(dbSid, aiMsg);
-        // For wizard messages, swap the local id to the DB id so subsequent
-        // step/answer updates can be persisted by message id.
-        if (hasWizard && dbId) {
-          updateMessage(aiMsg.id, { id: dbId } as any);
+      // If user already confirmed at the criteria-confirmation gate, skip the
+      // redundant "Here's the complete draft…" bubble and go straight to eval.
+      const confirmLower = text.toLowerCase();
+      const isConfirm = confirmLower.includes('yes') || confirmLower.includes('looks good') || confirmLower.includes('good');
+      const skipAiBubble = response.awaitingCriteriaConfirmation && isConfirm;
+
+      if (!skipAiBubble) {
+        const aiMsg: UIChatMessage = {
+          id: String(Date.now() + 1),
+          role: 'assistant',
+          content: response.message,
+          options: hasWizard ? null : response.options,
+          wizard: hasWizard
+            ? {
+                questions: wizardPayload.questions,
+                answers: {},
+                currentIndex: 0,
+                completed: false,
+              }
+            : null,
+        };
+        addMessage(aiMsg);
+        if (dbSid) {
+          const dbId = await saveMessage(dbSid, aiMsg);
+          if (hasWizard && dbId) {
+            updateMessage(aiMsg.id, { id: dbId } as any);
+          }
         }
       }
 
       if (response.awaitingCriteriaConfirmation) {
-        const confirmLower = text.toLowerCase();
-        const isConfirm = confirmLower.includes('yes') || confirmLower.includes('looks good') || confirmLower.includes('good');
         if (isConfirm) {
           setLoading(true);
           const evalMsg: UIChatMessage = {
