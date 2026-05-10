@@ -20,6 +20,7 @@ import { api } from '@/services/api';
 import { cn } from '@/lib/utils';
 import { useStorySaver } from '@/hooks/useStorySaver';
 import type { StoryDraft, EvaluateResponse } from '@/services/types';
+import { getEvalStatus } from '@/lib/evalStatus';
 
 function StoryCard({
   story, index, total, onUpdate, onRemove, onSave, isSaved, sessionId, contextId,
