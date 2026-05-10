@@ -150,12 +150,24 @@ export interface StoryAgentOption {
   label: string;
 }
 
+export interface ClarificationQuestion {
+  id: string;
+  question: string;
+  options?: StoryAgentOption[] | null;
+  allowFreeText?: boolean;
+}
+
+export interface ClarificationWizardPayload {
+  questions: ClarificationQuestion[];
+}
+
 export interface StoryAgentResponse {
   message: string;
   options: StoryAgentOption[] | null;
   awaitingCriteriaConfirmation: boolean;
   storyDraft: StoryDraft;
   confirmSplit?: number[] | null;
+  clarificationWizard?: ClarificationWizardPayload | null;
 }
 
 export type ScoreResult = "PASS" | "FAIL";
