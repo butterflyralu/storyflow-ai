@@ -414,6 +414,7 @@ serve(async (req) => {
             function: { name: "respond_to_user" },
           },
         }),
+        signal: AbortSignal.timeout(30_000),
       }
     );
 
