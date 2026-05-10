@@ -26,6 +26,10 @@ const DEMO_CONTEXT: ProductContextInput = {
   strategy: 'Mobile-first UX with real-time availability and smart suggestions. Differentiate through simplicity and instant booking versus complex enterprise facility management tools.',
   objectives: 'Launch interactive floor map, add recurring booking support, integrate with Google Calendar and Microsoft Teams, achieve 80% adoption within pilot companies.',
   acFormat: 'plain',
+  dorRules: [
+    { id: 'ac', name: 'Acceptance Criteria', description: 'Acceptance criteria are present, grouped, and specific.' },
+    { id: 'desc', name: 'Description', description: 'Description is clear and sufficient for development.' },
+  ],
 };
 
 const TILE_COLORS: Record<number, string> = {
