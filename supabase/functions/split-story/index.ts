@@ -92,6 +92,15 @@ serve(async (req) => {
       });
     }
 
+    const MAX_BODY_BYTES = 64 * 1024;
+    const cl = Number(req.headers.get("content-length") || 0);
+    if (cl > MAX_BODY_BYTES) {
+      return new Response(JSON.stringify({ error: "Request body too large (max 64KB)" }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { story, agentContext } = await req.json();
 
     const GOOGLE_GEMINI_API_KEY = Deno.env.get("GOOGLE_GEMINI_API_KEY");
@@ -210,6 +219,7 @@ serve(async (req) => {
           tools: [toolDef],
           tool_choice: { type: "function", function: { name: "split_epic" } },
         }),
+        signal: AbortSignal.timeout(30_000),
       }
     );
 
@@ -284,6 +294,12 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("split-story error:", e);
+    if (e instanceof DOMException && e.name === "TimeoutError") {
+      return new Response(
+        JSON.stringify({ error: "AI request timed out. Please try again." }),
+        { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
