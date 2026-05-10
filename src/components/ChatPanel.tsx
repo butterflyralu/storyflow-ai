@@ -361,9 +361,10 @@ export function ChatPanel() {
                       initialIndex={msg.wizard!.currentIndex}
                       completed={msg.wizard!.completed}
                       onStateChange={(state) => {
-                        updateMessage(msg.id, {
-                          wizard: { questions: msg.wizard!.questions, ...state },
-                        });
+                        const nextWizard = { questions: msg.wizard!.questions, ...state };
+                        updateMessage(msg.id, { wizard: nextWizard });
+                        // Persist resume state across refreshes / sessions.
+                        updateMessageOptions(msg.id, { __wizard: nextWizard });
                       }}
                       onComplete={(answers, skippedAll) => {
                         const lines = msg.wizard!.questions
