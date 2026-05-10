@@ -83,7 +83,7 @@ const SCREEN_TITLES = [
 
 export function ContextWizard() {
   const TOTAL_SCREENS = 3;
-  const { setProductContext, setContextId, setStep } = useWizard();
+  const { setProductContext, setContextId, setStep, triggerSidebarRefresh } = useWizard();
   const { saveContext: saveContextToDB } = usePersistedContext();
   const [screen, setScreen] = useState(0);
   const [values, setValues] = useState<ProductContextInput>({ ...EMPTY_CONTEXT });
