@@ -112,6 +112,7 @@ export function ContextWizard() {
     } catch { /* continue */ }
     setSaving(false);
     setProductContext(values);
+    triggerSidebarRefresh();
     setStep(2);
   };
 
