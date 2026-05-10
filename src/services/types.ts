@@ -45,6 +45,17 @@ export interface ValidateContextResponse {
 export type ProductType = 'b2b' | 'b2c' | 'enterprise' | 'internal';
 export type Platform = 'web' | 'mobile' | 'desktop' | 'both';
 
+export interface DorRule {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export const DEFAULT_DOR_RULES: DorRule[] = [
+  { id: 'ac', name: 'Acceptance Criteria', description: 'Acceptance criteria are present, grouped, and specific.' },
+  { id: 'desc', name: 'Description', description: 'Description is clear and sufficient for development.' },
+];
+
 export interface SaveContextRequest {
   productName: string;
   industry: string;
@@ -57,6 +68,7 @@ export interface SaveContextRequest {
   persona: string;
   strategy: string;
   objectives: string;
+  dorRules: DorRule[];
 }
 
 export interface SaveContextResponse {

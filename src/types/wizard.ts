@@ -8,7 +8,9 @@ import type {
   StoryMetadata,
   SaveContextRequest,
   EvaluateResponse,
+  DorRule,
 } from '@/services/types';
+import { DEFAULT_DOR_RULES } from '@/services/types';
 
 // Re-export shared types for convenience
 export type {
@@ -17,6 +19,7 @@ export type {
   StoryMetadata,
   SaveContextRequest,
   EvaluateResponse,
+  DorRule,
 };
 
 /** The wizard step numbers */
@@ -78,4 +81,5 @@ export const EMPTY_CONTEXT: ProductContextInput = {
   strategy: '',
   objectives: '',
   acFormat: 'plain',
+  dorRules: DEFAULT_DOR_RULES.map(r => ({ ...r })),
 };

@@ -2,6 +2,18 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import type { ProductContextInput } from '@/types/wizard';
+import { DEFAULT_DOR_RULES, type DorRule } from '@/services/types';
+
+function normalizeDorRules(raw: unknown): DorRule[] {
+  if (!Array.isArray(raw) || raw.length === 0) return DEFAULT_DOR_RULES.map(r => ({ ...r }));
+  return raw
+    .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
+    .map((r) => ({
+      id: typeof r.id === 'string' && r.id ? r.id : crypto.randomUUID(),
+      name: typeof r.name === 'string' ? r.name : '',
+      description: typeof r.description === 'string' ? r.description : '',
+    }));
+}
 
 export function usePersistedContext() {
   const { user } = useAuth();
@@ -24,6 +36,7 @@ export function usePersistedContext() {
         strategy: ctx.strategy,
         objectives: ctx.objectives,
         ac_format: ctx.acFormat,
+        dor_rules: (ctx.dorRules ?? DEFAULT_DOR_RULES) as any,
       })
       .select('id')
       .maybeSingle();
@@ -48,6 +61,7 @@ export function usePersistedContext() {
         strategy: ctx.strategy,
         objectives: ctx.objectives,
         ac_format: ctx.acFormat,
+        dor_rules: (ctx.dorRules ?? DEFAULT_DOR_RULES) as any,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -78,6 +92,7 @@ export function usePersistedContext() {
       strategy: r.strategy,
       objectives: r.objectives,
       acFormat: r.ac_format || 'plain',
+      dorRules: normalizeDorRules(r.dor_rules),
     }));
   }, [user]);
 
