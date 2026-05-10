@@ -1,21 +1,83 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Shield, Brain, Lock, Database, ArrowLeft } from 'lucide-react';
+import { Shield, Brain, Lock, Database, ArrowLeft, Sparkles, ClipboardCheck, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 const faqs = [
+  {
+    icon: Sparkles,
+    category: 'Getting Started',
+    items: [
+      {
+        q: 'What is StoryFlow AI?',
+        a: 'StoryFlow AI is a Product Owner assistant that helps you turn rough ideas into well-formed user stories. It coaches you through a conversation, drafts a story (title, As a / I want / So that, description, acceptance criteria), evaluates it against industry frameworks (INVEST and Definition of Ready), and helps you split stories that are too large into smaller ones.',
+      },
+      {
+        q: 'How do I start a new story?',
+        a: 'After creating a **product context** (mission, persona, strategy, north-star, objectives), open the workspace and just describe your idea in the chat. The agent will ask up to 4 — or 4–6 for complex stories — **clarifying questions in a stepped wizard** before drafting. You can answer with the suggested chips or free text, skip individual questions, or skip to draft.',
+      },
+      {
+        q: 'What is the product context for?',
+        a: 'It is the strategic backdrop the agent uses on every request: your product mission, target persona, competitive strategy, north-star metric, and objectives. You can manage multiple contexts and switch between them from the sidebar. New accounts can also load **demo content** to explore the flow without filling everything in.',
+      },
+    ],
+  },
+  {
+    icon: ClipboardCheck,
+    category: 'Drafting & Evaluation',
+    items: [
+      {
+        q: 'How does story evaluation work?',
+        a: 'After the draft is ready, the agent runs a **quality evaluation** against INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable) and Definition of Ready criteria. You see a scorecard with PASS/FAIL per criterion and inline amber annotations on the parts of the story that need work, with a one-click "Apply" to accept the suggested improvement.',
+      },
+      {
+        q: 'What if I refresh during evaluation, or want to re-run it?',
+        a: 'Use the **Evaluate** button in the Story Draft header. It re-runs the quality checks on demand for the current story — the same is available on each card in the split view and on stories opened from the sidebar.',
+      },
+      {
+        q: 'How do I know which stories were evaluated?',
+        a: 'Every story shows a **status badge**: "Draft" (neutral), "Evaluated · Passed" (green), or "Needs work" (amber). The same dot indicator is shown next to sessions and child stories in the sidebar so you can see at a glance which ones still need a quality pass.',
+      },
+      {
+        q: 'Why does the agent never auto-fill "So that"?',
+        a: 'The "So that" clause captures **business value** — and that is your call as the Product Owner. The agent will ask about value but never invent it, to keep the story honest and aligned with your strategy.',
+      },
+      {
+        q: 'How do I export a story?',
+        a: 'Use the **Copy** menu in the Story Draft header. You can copy as plain text or as **Jira-compatible Markdown** with categorized acceptance criteria, ready to paste into your tracker.',
+      },
+    ],
+  },
+  {
+    icon: Layers,
+    category: 'Epics & Splitting',
+    items: [
+      {
+        q: 'What happens if my story is too big?',
+        a: 'The evaluator flags it as a **likely epic** and offers to split it. You discuss the proposed sub-stories in chat — keep all, drop some, or refine — then confirm. The chosen sub-stories appear as **swipeable cards** you can edit, evaluate, and save individually, or "Save All" at once.',
+      },
+      {
+        q: 'How are epics organised?',
+        a: 'When you save split stories, an **epic record** is created with the original story details and each sub-story is linked to it. Epics and their child stories appear grouped in the sidebar; clicking a child loads it into the workspace. There is also an `/epics` dashboard with all your epics in one place.',
+      },
+    ],
+  },
   {
     icon: Brain,
     category: 'AI & Data Usage',
     items: [
       {
         q: 'What AI model does the app use?',
-        a: 'The app uses **Google Gemini 2.5 Flash** via a secure AI gateway. This model is optimized for speed and structured reasoning — ideal for drafting and evaluating user stories. The AI runs on Google\'s infrastructure and does not store or learn from your data.',
+        a: 'The app uses **Google Gemini 2.5 Flash** via a secure AI gateway. The model is optimised for speed and structured reasoning. The AI runs on Google\'s infrastructure and does not store or learn from your data.',
       },
       {
         q: 'How does the AI use my data?',
-        a: 'The AI receives your current conversation history and product context **only for the duration of a single request** to generate relevant responses. Your data is **not used to train the model**, is **not stored by Google**, and is **not shared with any third party**. Each request is stateless from the AI\'s perspective.',
+        a: 'Each request sends only your current conversation, the active product context, and (for evaluation) the story draft — strictly for the duration of that request. Your data is **not used to train the model**, **not retained by Google**, and **not shared with third parties**.',
+      },
+      {
+        q: 'What about reliability and rate limits?',
+        a: 'The app uses **exponential backoff retries (1s/2s/4s)** and surfaces clear, actionable messages for rate-limit (429) and credit (402) errors so you know whether to wait or top up.',
       },
       {
         q: 'Can the AI access data from other users?',
@@ -29,11 +91,11 @@ const faqs = [
     items: [
       {
         q: 'What happens when I sign in with Google?',
-        a: 'You are redirected to **Google\'s own login page**. The app **never sees or stores your Google password**. After you authenticate, Google sends back only your **email address, display name, and profile photo**. This is standard OAuth 2.0 — the industry-standard secure protocol used by virtually all modern apps.',
+        a: 'You are redirected to **Google\'s own login page**. The app **never sees or stores your Google password**. After authentication, Google sends back only your **email, display name, and profile photo**. This is standard OAuth 2.0.',
       },
       {
         q: 'What if I sign in with email and password?',
-        a: 'Your password is **hashed using bcrypt** before being stored — meaning the actual password is never saved in plain text. The authentication system is managed by an enterprise-grade infrastructure provider and follows industry best practices for secure credential storage.',
+        a: 'Your password is **hashed using bcrypt** before being stored — the actual password is never saved in plain text. Authentication is managed by enterprise-grade infrastructure following industry best practices.',
       },
       {
         q: 'Can the app developers see my password?',
@@ -47,23 +109,19 @@ const faqs = [
     items: [
       {
         q: 'What data does the app store?',
-        a: 'The app stores: your **profile** (display name, avatar URL), your **product context** (product name, industry, personas, etc.), your **chat sessions** (conversation history with the AI), **generated user stories** (title, description, acceptance criteria, and evaluation results), and **epics** (parent stories with links to their child stories from splits). All data is tied to your authenticated account.',
-      },
-      {
-        q: 'How does epic splitting work?',
-        a: 'When the AI evaluates a story and determines it\'s too large (a "likely epic"), it offers to **split it into smaller, independent user stories**. You discuss the proposed split in the chat — dropping, merging, or refining sub-stories — then confirm. The confirmed stories appear as **swipeable cards** you can edit, evaluate, and save individually. When you save, an **epic record** is created in the database with the original story details, and each child story is linked to it via a parent-child relationship. You can see your epics and their child stories grouped in the sidebar.',
+        a: 'Your **profile** (display name, avatar), **product contexts**, **chat sessions** with message history (including clarification-wizard answers so they resume after a refresh), **generated stories** (title, As a / I want / So that, description, acceptance criteria, evaluation result and scorecard), and **epics** with their linked child stories. Admins also see anonymised **API usage logs** (token counts, model, USD cost) for monitoring.',
       },
       {
         q: 'Who can see my data?',
-        a: 'Only **you**. All database tables are protected by Row-Level Security (RLS) policies, which means every query is filtered by your authenticated user ID. No other user — including other testers — can access your data.',
+        a: 'Only **you**. All tables are protected by Row-Level Security (RLS) policies — every query is filtered by your authenticated user ID. No other tester can access your data.',
       },
       {
         q: 'Where is my data stored?',
-        a: 'Your data is stored in a secure, managed PostgreSQL database hosted on enterprise cloud infrastructure with encryption at rest and in transit (TLS/SSL).',
+        a: 'In a secure managed PostgreSQL database hosted on enterprise cloud infrastructure with encryption at rest and in transit (TLS/SSL).',
       },
       {
         q: 'Can I delete my data?',
-        a: 'Yes. You can delete individual chat sessions from the sidebar. If you need a full data wipe, contact the app administrator.',
+        a: 'Yes. You can delete individual chat sessions from the sidebar (a confirmation dialog protects the action). For a full data wipe, contact the app administrator.',
       },
     ],
   },
@@ -77,7 +135,7 @@ const faqs = [
       },
       {
         q: 'Is this app GDPR-compliant?',
-        a: 'The app follows data minimization principles — we only collect what\'s needed for functionality. Data is per-user isolated and can be deleted on request. For a formal GDPR assessment for production use, consult your legal/compliance team.',
+        a: 'The app follows data minimisation principles — we only collect what is needed for functionality. Data is per-user isolated and can be deleted on request. For a formal GDPR assessment for production use, consult your legal/compliance team.',
       },
       {
         q: 'What happens during the testing period?',
@@ -105,10 +163,10 @@ export default function FAQ() {
 
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Security & Privacy FAQ
+            StoryFlow AI — FAQ
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Everything you need to know about how your data is handled, stored, and protected.
+            How the app works, how the AI drafts and evaluates your stories, and how your data is protected.
           </p>
         </div>
 
@@ -148,7 +206,7 @@ export default function FAQ() {
         </div>
 
         <p className="mt-10 text-center text-xs text-muted-foreground">
-          Last updated: March 2026 · Questions? Contact your app administrator.
+          Last updated: May 2026 · Questions? Contact your app administrator.
         </p>
       </div>
     </div>
