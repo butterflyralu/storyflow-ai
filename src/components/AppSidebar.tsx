@@ -45,19 +45,22 @@ import { cn } from '@/lib/utils';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { getEvalStatus } from '@/lib/evalStatus';
 
 interface SavedSession {
   id: string;
   title: string;
   created_at: string;
   updated_at: string;
+  evaluation_status?: 'PASS' | 'FAIL' | null;
+  has_story?: boolean;
 }
 
 interface EpicWithStories {
   id: string;
   title: string;
   created_at: string;
-  stories: Array<{ id: string; title: string; created_at: string }>;
+  stories: Array<{ id: string; title: string; created_at: string; evaluation_result?: 'PASS' | 'FAIL' | null }>;
 }
 
 export function AppSidebar() {
@@ -357,7 +360,16 @@ export function AppSidebar() {
                         ) : (
                           <div className="flex items-center gap-1 min-w-0 w-full">
                             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                              <span className="truncate text-sm">{session.title}</span>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {(() => {
+                                  const st = getEvalStatus(session.evaluation_status);
+                                  const show = session.has_story || session.evaluation_status;
+                                  return show ? (
+                                    <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', st.dotClass)} title={st.tooltip} />
+                                  ) : null;
+                                })()}
+                                <span className="truncate text-sm">{session.title}</span>
+                              </div>
                               <span className="text-[10px] text-muted-foreground">
                                 {formatDate(session.updated_at)}
                               </span>
@@ -417,16 +429,21 @@ export function AppSidebar() {
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <div className="ml-5 border-l border-border pl-2 space-y-0.5 py-1">
-                              {epic.stories.map(story => (
-                                <button
-                                  key={story.id}
-                                  onClick={() => handleSelectStory(story.id)}
-                                  className="flex w-full items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 hover:text-foreground transition-colors text-left"
-                                >
-                                  <FileText className="h-3 w-3 flex-shrink-0" />
-                                  <span className="truncate">{story.title}</span>
-                                </button>
-                              ))}
+                              {epic.stories.map(story => {
+                                const st = getEvalStatus(story.evaluation_result);
+                                return (
+                                  <button
+                                    key={story.id}
+                                    onClick={() => handleSelectStory(story.id)}
+                                    className="flex w-full items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 hover:text-foreground transition-colors text-left"
+                                    title={st.tooltip}
+                                  >
+                                    <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', st.dotClass)} />
+                                    <FileText className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate">{story.title}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           </CollapsibleContent>
                         </Collapsible>

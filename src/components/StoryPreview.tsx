@@ -10,6 +10,7 @@ import { Pencil, Check, X, AlertTriangle, Save, Copy, Info, Scissors, FileText, 
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 import { useStorySaver } from '@/hooks/useStorySaver';
+import { getEvalStatus } from '@/lib/evalStatus';
 import type { EvaluationScorecardItem, StoryDraft } from '@/services/types';
 import {
   DropdownMenu,
@@ -336,6 +337,15 @@ export function StoryPreview() {
                 </PopoverContent>
               </Popover>
             )}
+            {(() => {
+              const st = getEvalStatus(evaluation?.overallResult as any);
+              return (
+                <Badge variant="outline" className={cn('text-xs gap-1.5', st.badgeClass)} title={st.tooltip}>
+                  <span className={cn('h-1.5 w-1.5 rounded-full', st.dotClass)} />
+                  {st.label}
+                </Badge>
+              );
+            })()}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
             {!evaluation && story.title && (
               <Button size="sm" variant="outline" onClick={handleEvaluate} disabled={evaluating} className="h-8 gap-1.5 px-3 text-xs font-semibold">

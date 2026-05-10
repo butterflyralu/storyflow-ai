@@ -20,6 +20,7 @@ import { api } from '@/services/api';
 import { cn } from '@/lib/utils';
 import { useStorySaver } from '@/hooks/useStorySaver';
 import type { StoryDraft, EvaluateResponse } from '@/services/types';
+import { getEvalStatus } from '@/lib/evalStatus';
 
 function StoryCard({
   story, index, total, onUpdate, onRemove, onSave, isSaved, sessionId, contextId,
@@ -53,7 +54,18 @@ function StoryCard({
       <Card className="flex h-full flex-col border shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <Badge variant="outline" className="text-xs">{index + 1} of {total}</Badge>
+            <div className="flex items-center gap-1.5">
+              <Badge variant="outline" className="text-xs">{index + 1} of {total}</Badge>
+              {(() => {
+                const st = getEvalStatus(evaluation?.overallResult as any);
+                return (
+                  <Badge variant="outline" className={cn('text-[10px] gap-1', st.badgeClass)} title={st.tooltip}>
+                    <span className={cn('h-1.5 w-1.5 rounded-full', st.dotClass)} />
+                    {st.label}
+                  </Badge>
+                );
+              })()}
+            </div>
             <div className="flex items-center gap-1">
               {isSaved && (
                 <Badge variant="default" className="text-xs gap-1"><Check className="h-3 w-3" /> Saved</Badge>
