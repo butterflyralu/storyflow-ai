@@ -178,6 +178,7 @@ function EmptyStoryState() {
 
 export function StoryPreview() {
   const { story, updateStory, evaluation, setStory, setEvaluation, saveStory, addMessage, resetStory, productContext, setPendingSplitStories, setEpicSummary, contextId, sessionId, dbSessionId } = useWizard();
+  const { saveGeneratedStory } = useStorySaver();
   const [saving, setSaving] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
