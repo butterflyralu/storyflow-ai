@@ -241,6 +241,7 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
         },
         body: JSON.stringify({
           model: aiModel,
+          max_tokens: 2048,
           messages,
           tools: [toolDef],
           tool_choice: { type: "function", function: { name: "return_evaluation" } },

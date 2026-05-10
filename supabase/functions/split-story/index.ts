@@ -205,6 +205,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: aiModel,
+          max_tokens: 2048,
           messages: splitMessages,
           tools: [toolDef],
           tool_choice: { type: "function", function: { name: "split_epic" } },
