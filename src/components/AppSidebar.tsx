@@ -181,6 +181,53 @@ export function AppSidebar() {
     setDeleteSessionId(null);
   };
 
+  const handleSelectStory = async (storyId: string) => {
+    try {
+      const { data } = await supabase
+        .from('generated_stories')
+        .select('*')
+        .eq('id', storyId)
+        .maybeSingle();
+      if (!data) {
+        toast({ title: 'Story not found', variant: 'destructive' });
+        return;
+      }
+      const s = data as any;
+      setStory({
+        title: s.title || '',
+        asA: s.as_a || '',
+        iWant: s.i_want || '',
+        soThat: s.so_that || '',
+        description: s.description || '',
+        acceptanceCriteria: s.acceptance_criteria || [],
+        metadata: s.metadata || { project: '', epic: '', priority: '', estimate: '' },
+      });
+      if (s.evaluation_result) {
+        setEvaluation({
+          overallResult: s.evaluation_result,
+          scorecard: s.evaluation_scorecard || [],
+          improvedStory: s.evaluation_improved_story || null,
+          learningInsight: s.evaluation_learning_insight || null,
+          newChecklistRule: null,
+          isLikelyEpic: s.is_likely_epic || false,
+        });
+      } else {
+        setEvaluation(null);
+      }
+      if (s.session_id) {
+        setDbSessionId(s.session_id);
+        const msgs = await loadMessages(s.session_id);
+        setChatHistory(msgs);
+      } else {
+        setDbSessionId(null);
+        setChatHistory([]);
+      }
+      setStep(2);
+    } catch (e) {
+      toast({ title: 'Failed to load story', variant: 'destructive' });
+    }
+  };
+
   const handleNewSession = () => {
     setChatHistory([]);
     setDbSessionId(null);
@@ -371,13 +418,14 @@ export function AppSidebar() {
                           <CollapsibleContent>
                             <div className="ml-5 border-l border-border pl-2 space-y-0.5 py-1">
                               {epic.stories.map(story => (
-                                <div
+                                <button
                                   key={story.id}
-                                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 transition-colors"
+                                  onClick={() => handleSelectStory(story.id)}
+                                  className="flex w-full items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground rounded hover:bg-accent/50 hover:text-foreground transition-colors text-left"
                                 >
                                   <FileText className="h-3 w-3 flex-shrink-0" />
                                   <span className="truncate">{story.title}</span>
-                                </div>
+                                </button>
                               ))}
                             </div>
                           </CollapsibleContent>
