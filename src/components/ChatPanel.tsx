@@ -226,11 +226,22 @@ export function ChatPanel() {
         confirmSplitStories(indices);
       }
 
+      const wizardPayload = (response as any).clarificationWizard;
+      const hasWizard = wizardPayload?.questions?.length >= 2;
+
       const aiMsg: UIChatMessage = {
         id: String(Date.now() + 1),
         role: 'assistant',
         content: response.message,
-        options: response.options,
+        options: hasWizard ? null : response.options,
+        wizard: hasWizard
+          ? {
+              questions: wizardPayload.questions,
+              answers: {},
+              currentIndex: 0,
+              completed: false,
+            }
+          : null,
       };
       addMessage(aiMsg);
       if (dbSid) saveMessage(dbSid, aiMsg);
