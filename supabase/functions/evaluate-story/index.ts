@@ -304,6 +304,18 @@ ${story.acceptanceCriteria.map((g: { category: string; items: string[] }) =>
 
     const parsed = JSON.parse(toolCall.function.arguments);
 
+    // LLM09 sanity check: reject suspiciously empty all-PASS evaluations.
+    const sc = Array.isArray(parsed?.scorecard) ? parsed.scorecard : [];
+    const allPass = sc.length > 0 && sc.every((r: any) => r?.result === "PASS");
+    const allEmptyExplanations = sc.every((r: any) => !r?.explanation || String(r.explanation).trim().length < 10);
+    if (allPass && allEmptyExplanations) {
+      console.warn("[evaluate-story] Rejected evaluation: all PASS with empty explanations");
+      return new Response(
+        JSON.stringify({ error: "Evaluation looked unreliable (all PASS with no rationale). Please retry." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Preserve original metadata if not provided by AI
     if (!parsed.improvedStory.metadata || !parsed.improvedStory.metadata.priority) {
       parsed.improvedStory.metadata = story.metadata || { project: "", epic: "", priority: "Medium", estimate: "" };
