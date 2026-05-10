@@ -336,6 +336,15 @@ export function StoryPreview() {
                 </PopoverContent>
               </Popover>
             )}
+            {(() => {
+              const st = getEvalStatus(evaluation?.overallResult as any);
+              return (
+                <Badge variant="outline" className={cn('text-xs gap-1.5', st.badgeClass)} title={st.tooltip}>
+                  <span className={cn('h-1.5 w-1.5 rounded-full', st.dotClass)} />
+                  {st.label}
+                </Badge>
+              );
+            })()}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
             {!evaluation && story.title && (
               <Button size="sm" variant="outline" onClick={handleEvaluate} disabled={evaluating} className="h-8 gap-1.5 px-3 text-xs font-semibold">
