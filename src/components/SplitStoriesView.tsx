@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Save, Trash2, X, Check, ClipboardCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, X, Check, ClipboardCheck, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 import { cn } from '@/lib/utils';
