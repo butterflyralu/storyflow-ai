@@ -40,7 +40,7 @@ export function ChatPanel() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const storyRef = useRef(story);
   storyRef.current = story;
-  const { createSession, saveMessage, updateSessionTitle } = usePersistedChat();
+  const { createSession, saveMessage, updateMessageOptions, updateSessionTitle } = usePersistedChat();
   const { saveGeneratedStory } = useStorySaver();
   const sessionTitleRef = useRef<string>('');
 
