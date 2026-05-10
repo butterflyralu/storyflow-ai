@@ -140,7 +140,7 @@ export interface StoryAgentResponse {
   storyDraft: StoryDraft;
 }
 
-export type ScoreResult = "PASS" | "FAIL";
+export type ScoreResult = "PASS" | "PASS_WITH_CAVEAT" | "FAIL";
 export type OverallResult = "PASS" | "FAIL";
 
 export interface EvaluationScorecardItem {
