@@ -53,7 +53,7 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 }
 
 export function ProductContextSettings() {
-  const { productContext, setProductContext, contextId, setStep } = useWizard();
+  const { productContext, setProductContext, contextId, setStep, triggerSidebarRefresh } = useWizard();
   const { updateContext, saveContext: saveNewContext } = usePersistedContext();
   const { toast } = useToast();
   const [values, setValues] = useState<ProductContextInput>({ ...productContext });
@@ -76,6 +76,7 @@ export function ProductContextSettings() {
     if (success) {
       setProductContext(values);
       setSaved(true);
+      triggerSidebarRefresh();
       toast({ title: 'Context saved', description: 'Your product context has been updated.' });
       setTimeout(() => setSaved(false), 2000);
     } else {
