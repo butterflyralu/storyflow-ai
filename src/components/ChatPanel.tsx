@@ -244,7 +244,14 @@ export function ChatPanel() {
           : null,
       };
       addMessage(aiMsg);
-      if (dbSid) saveMessage(dbSid, aiMsg);
+      if (dbSid) {
+        const dbId = await saveMessage(dbSid, aiMsg);
+        // For wizard messages, swap the local id to the DB id so subsequent
+        // step/answer updates can be persisted by message id.
+        if (hasWizard && dbId) {
+          updateMessage(aiMsg.id, { id: dbId } as any);
+        }
+      }
 
       if (response.awaitingCriteriaConfirmation) {
         const confirmLower = text.toLowerCase();
