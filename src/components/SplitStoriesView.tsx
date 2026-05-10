@@ -139,23 +139,36 @@ function StoryCard({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Evaluation</div>
-                <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-[10px]">
-                  {passCount}/{totalCriteria} passed
-                </Badge>
+                {summary && (
+                  <Badge variant={evaluation.overallResult === 'PASS' ? 'default' : 'secondary'} className="text-[10px]">
+                    {summary}
+                  </Badge>
+                )}
               </div>
-              {evaluation.scorecard.map((item, i) => (
-                <div key={i} className={cn('rounded p-2 text-xs', item.result === 'PASS' ? 'bg-primary/5' : 'bg-destructive/5')}>
-                  <div className="flex items-center gap-1.5">
-                    <div className={cn('flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full',
-                      item.result === 'PASS' ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive')}>
-                      {item.result === 'PASS' ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
+              {evaluation.scorecard.map((item, i) => {
+                const isPass = item.result === 'PASS';
+                const isCaveat = item.result === 'PASS_WITH_CAVEAT';
+                const rowBg = isPass ? 'bg-primary/5' : isCaveat ? 'bg-amber-500/5' : 'bg-destructive/5';
+                const iconBg = isPass
+                  ? 'bg-primary/20 text-primary'
+                  : isCaveat
+                    ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                    : 'bg-destructive/20 text-destructive';
+                return (
+                  <div key={i} className={cn('rounded p-2 text-xs', rowBg)}>
+                    <div className="flex items-center gap-1.5">
+                      <div className={cn('flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full', iconBg)}>
+                        {isPass ? <Check className="h-2.5 w-2.5" /> : isCaveat ? <AlertTriangle className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
+                      </div>
+                      <span className="font-medium text-foreground">{item.criterion}</span>
+                      <Badge variant="outline" className="text-[9px] px-1 py-0">{item.framework}</Badge>
                     </div>
-                    <span className="font-medium text-foreground">{item.criterion}</span>
-                    <Badge variant="outline" className="text-[9px] px-1 py-0">{item.framework}</Badge>
+                    {!isPass && (
+                      <div className="mt-0.5 pl-5.5 text-muted-foreground">{item.explanation}</div>
+                    )}
                   </div>
-                  <div className="mt-0.5 pl-5.5 text-muted-foreground">{item.explanation}</div>
-                </div>
-              ))}
+                );
+              })}
               {evaluation.improvedStory && evaluation.overallResult === 'FAIL' && (
                 <Button size="sm" variant="outline" className="w-full text-xs mt-1" onClick={() => onUpdate(evaluation.improvedStory)}>
                   Apply Improved Version
