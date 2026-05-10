@@ -294,6 +294,12 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("split-story error:", e);
+    if (e instanceof DOMException && e.name === "TimeoutError") {
+      return new Response(
+        JSON.stringify({ error: "AI request timed out. Please try again." }),
+        { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
