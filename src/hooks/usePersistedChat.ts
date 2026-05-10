@@ -23,12 +23,16 @@ export function usePersistedChat() {
 
   const saveMessage = useCallback(async (sessionId: string, msg: UIChatMessage) => {
     if (!user) return;
+    // Encode either an options array or an inline wizard payload into the jsonb `options` column.
+    const payload = msg.wizard
+      ? { __wizard: msg.wizard }
+      : (msg.options ?? null);
     await supabase.from('chat_messages').insert({
       session_id: sessionId,
       user_id: user.id,
       role: msg.role,
       content: msg.content,
-      options: msg.options ?? null,
+      options: payload as any,
     });
   }, [user]);
 
@@ -61,12 +65,17 @@ export function usePersistedChat() {
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
     if (!data) return [];
-    return data.map((m: any) => ({
-      id: m.id,
-      role: m.role,
-      content: m.content,
-      options: m.options,
-    }));
+    return data.map((m: any) => {
+      const opts = m.options;
+      const isWizard = opts && !Array.isArray(opts) && opts.__wizard;
+      return {
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        options: isWizard ? null : (Array.isArray(opts) ? opts : null),
+        wizard: isWizard ? opts.__wizard : null,
+      };
+    });
   }, [user]);
 
   return { createSession, saveMessage, updateSessionTitle, loadSessions, loadMessages };

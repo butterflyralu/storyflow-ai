@@ -104,7 +104,18 @@ When the conversation starts, let the user describe their idea freely. Do NOT of
 After drafting title/asA/iWant, ask the user to provide the business value. Coach them until they provide a strong one. Do NOT skip this step.
 
 ### Phase 3: Clarification
-Before generating acceptance criteria, ask up to 4 clarifying questions about implementation approach (e.g., "Should password reset use email link or OTP?"). This ensures the story is specific enough.
+
+Before generating acceptance criteria, run a clarification phase. Decide story complexity from the draft + context:
+
+- **Simple story** (single user type, single happy path, no integrations or compliance concerns): ask 1–3 short clarifying questions inline using the regular \`message\` + \`options\` mechanism, one question per turn.
+- **Complex story** (multi-step flow, multiple user types, third-party integrations, async/background work, security/compliance, several edge cases, ambiguous scope): emit a **clarificationWizard** payload with **4–6** targeted questions in a single response. The frontend will render them as a stepped wizard, asking one at a time.
+
+Wizard rules:
+- Use clarificationWizard ONLY when the story is genuinely complex AND you have not already asked these questions in chat history.
+- Each question must be specific and actionable (e.g. "Should reset use email link, OTP, or both?", "Which user types should this cover?", "What is the maximum acceptable latency?"). Avoid generic questions.
+- For each question, include 2–4 short option chips when the answer space is enumerable. Set \`allowFreeText: true\` (default) so users can type their own answer.
+- After emitting the wizard, keep \`message\` short (one-liner intro like "I have a few clarifying questions before I draft the acceptance criteria.") and DO NOT include \`options\` in the same response.
+- Emit the wizard at most once per story. The user's next message will contain "Clarifications:" with their answers — use those to draft AC and never re-launch the wizard for the same story.
 
 ### Phase 3b: User Type Coverage Check
 After clarification and before drafting AC, check the product context's "User Types" field. If the product has multiple user types (e.g., "Admin, Member, Guest"), ask the user:
@@ -112,6 +123,7 @@ After clarification and before drafting AC, check the product context's "User Ty
 - If some user types need different behavior, suggest splitting AC categories by user type or creating separate stories.
 - If the user confirms only one user type is relevant, proceed. If multiple are relevant, ensure the AC covers each type's perspective.
 - Do NOT skip this step when multiple user types exist. It's critical for completeness.
+- If you already covered user-type coverage inside the clarificationWizard, you may skip this step.
 
 ### Phase 4: Drafting
 Fill in the remaining story fields based on the user's answers. Update the storyDraft incrementally with each response.
@@ -264,6 +276,41 @@ serve(async (req) => {
               type: "array",
               items: { type: "number" },
               description: "1-based indices of pending split stories the user confirmed to keep. Only set when the user has confirmed their selection from pending split stories.",
+            },
+            clarificationWizard: {
+              type: "object",
+              description: "Optional. Set ONLY for complex stories to launch an inline stepped clarification wizard with 4–6 targeted questions, asked one at a time in the UI.",
+              properties: {
+                questions: {
+                  type: "array",
+                  description: "Between 4 and 6 targeted clarifying questions. Each must be specific and actionable.",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string", description: "Stable short id, e.g. 'q1'." },
+                      question: { type: "string" },
+                      options: {
+                        type: "array",
+                        description: "0–4 short answer chips when the answer space is enumerable.",
+                        items: {
+                          type: "object",
+                          properties: { label: { type: "string" } },
+                          required: ["label"],
+                          additionalProperties: false,
+                        },
+                      },
+                      allowFreeText: {
+                        type: "boolean",
+                        description: "Whether the user can also type a free-text answer. Default true.",
+                      },
+                    },
+                    required: ["id", "question"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["questions"],
+              additionalProperties: false,
             },
           },
           required: ["message", "options", "awaitingCriteriaConfirmation", "storyDraft"],

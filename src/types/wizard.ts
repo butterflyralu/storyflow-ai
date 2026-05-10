@@ -30,12 +30,28 @@ export type ProductContextInput = SaveContextRequest & {
   acFormat: 'plain' | 'gherkin';
 };
 
-/** Chat message with UI extras (id for keys, options for tiles). */
+/** Inline clarification wizard payload attached to an assistant message. */
+export interface UIClarificationQuestion {
+  id: string;
+  question: string;
+  options?: { label: string }[] | null;
+  allowFreeText?: boolean;
+}
+
+export interface UIWizardState {
+  questions: UIClarificationQuestion[];
+  answers: Record<string, string>;
+  currentIndex: number;
+  completed: boolean;
+}
+
+/** Chat message with UI extras (id for keys, options for tiles, optional inline wizard). */
 export interface UIChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   options?: { label: string }[] | null;
+  wizard?: UIWizardState | null;
 }
 
 /** Empty defaults */

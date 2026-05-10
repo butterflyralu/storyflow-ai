@@ -33,6 +33,7 @@ interface WizardActions {
   setStory: (story: StoryDraft) => void;
   addMessage: (msg: UIChatMessage) => void;
   setChatHistory: (msgs: UIChatMessage[]) => void;
+  updateMessage: (id: string, update: Partial<UIChatMessage>) => void;
   setDbSessionId: (id: string | null) => void;
   setEvaluation: (result: EvaluateResponse | null) => void;
   saveStory: (story: StoryDraft) => void;
@@ -79,6 +80,10 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
 
   const addMessage = useCallback((msg: UIChatMessage) => {
     setChatHistory(prev => [...prev, msg]);
+  }, []);
+
+  const updateMessage = useCallback((id: string, update: Partial<UIChatMessage>) => {
+    setChatHistory(prev => prev.map(m => (m.id === id ? { ...m, ...update } : m)));
   }, []);
 
   const saveStory = useCallback((s: StoryDraft) => {
@@ -146,7 +151,7 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
         contextId, setContextId,
         sessionId, dbSessionId, setDbSessionId,
         story, updateStory, setStory,
-        chatHistory, addMessage, setChatHistory,
+        chatHistory, addMessage, setChatHistory, updateMessage,
         evaluation, setEvaluation,
         savedStories, saveStory,
         resetStory,

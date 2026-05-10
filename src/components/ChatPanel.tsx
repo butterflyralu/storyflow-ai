@@ -4,6 +4,7 @@ import { api } from '@/services/api';
 import type { UIChatMessage } from '@/types/wizard';
 import { EMPTY_STORY } from '@/types/wizard';
 import { OptionTiles } from '@/components/OptionTiles';
+import { ClarificationWizard } from '@/components/ClarificationWizard';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MarkdownText } from '@/components/MarkdownText';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ import {
 
 export function ChatPanel() {
   const {
-    chatHistory, addMessage, setChatHistory, story, updateStory, setStory,
+    chatHistory, addMessage, setChatHistory, updateMessage, story, updateStory, setStory,
     productContext, contextId, sessionId,
     setEvaluation, setStep, saveStory, resetStory,
     pendingSplitStories, confirmSplitStories, clearPendingSplit,
@@ -225,11 +226,22 @@ export function ChatPanel() {
         confirmSplitStories(indices);
       }
 
+      const wizardPayload = (response as any).clarificationWizard;
+      const hasWizard = wizardPayload?.questions?.length >= 2;
+
       const aiMsg: UIChatMessage = {
         id: String(Date.now() + 1),
         role: 'assistant',
         content: response.message,
-        options: response.options,
+        options: hasWizard ? null : response.options,
+        wizard: hasWizard
+          ? {
+              questions: wizardPayload.questions,
+              answers: {},
+              currentIndex: 0,
+              completed: false,
+            }
+          : null,
       };
       addMessage(aiMsg);
       if (dbSid) saveMessage(dbSid, aiMsg);
@@ -308,31 +320,68 @@ export function ChatPanel() {
     <div className="flex h-full flex-col bg-card/50">
       <ScrollArea className="flex-1 px-5 py-5 overscroll-y-contain">
         <div className="space-y-4">
-          {chatHistory.map(msg => (
-            <div
-              key={msg.id}
-              className={cn(
-                'flex',
-                msg.role === 'user' ? 'justify-end' : 'justify-start',
-              )}
-            >
+          {chatHistory.map(msg => {
+            const isWizardMsg = msg.role === 'assistant' && msg.wizard && msg.wizard.questions?.length > 0;
+            return (
               <div
+                key={msg.id}
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-br-sm shadow-soft'
-                    : 'bg-card text-foreground rounded-bl-sm border border-border shadow-card',
+                  'flex',
+                  msg.role === 'user' ? 'justify-end' : 'justify-start',
                 )}
               >
-                <MarkdownText content={msg.content} />
-                {msg.options && msg.options.length > 0 && (
-                  <div className="mt-3">
-                    <OptionTiles options={msg.options} onSelect={sendMessage} />
-                  </div>
-                )}
+                <div
+                  className={cn(
+                    'rounded-2xl text-sm leading-relaxed',
+                    isWizardMsg ? 'max-w-[92%] w-full' : 'max-w-[85%] px-4 py-3',
+                    msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground rounded-br-sm shadow-soft'
+                      : isWizardMsg
+                        ? 'bg-transparent'
+                        : 'bg-card text-foreground rounded-bl-sm border border-border shadow-card',
+                  )}
+                >
+                  {!isWizardMsg && <MarkdownText content={msg.content} />}
+                  {isWizardMsg && msg.content && (
+                    <div className="mb-2 px-1 text-foreground">
+                      <MarkdownText content={msg.content} />
+                    </div>
+                  )}
+                  {isWizardMsg && (
+                    <ClarificationWizard
+                      questions={msg.wizard!.questions}
+                      initialAnswers={msg.wizard!.answers}
+                      initialIndex={msg.wizard!.currentIndex}
+                      completed={msg.wizard!.completed}
+                      onStateChange={(state) => {
+                        updateMessage(msg.id, {
+                          wizard: { questions: msg.wizard!.questions, ...state },
+                        });
+                      }}
+                      onComplete={(answers, skippedAll) => {
+                        const lines = msg.wizard!.questions
+                          .map((q) => {
+                            const a = answers[q.id];
+                            if (!a || a === '(skipped)') return null;
+                            return `- Q: ${q.question}\n  A: ${a}`;
+                          })
+                          .filter(Boolean);
+                        const summary = lines.length > 0
+                          ? `Clarifications:\n${lines.join('\n')}`
+                          : 'I want to skip the rest of the clarifying questions — please draft the story with what you have.';
+                        sendMessage(summary);
+                      }}
+                    />
+                  )}
+                  {!isWizardMsg && msg.options && msg.options.length > 0 && (
+                    <div className="mt-3">
+                      <OptionTiles options={msg.options} onSelect={sendMessage} />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {loading && (
             <div className="flex justify-start">
               <div className="rounded-2xl rounded-bl-sm bg-card border border-border px-4 py-3 shadow-card">
