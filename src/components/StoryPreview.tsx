@@ -328,7 +328,7 @@ export function StoryPreview() {
                     </Badge>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="end" className="max-w-sm p-4">
+                <PopoverContent side="bottom" align="end" className="w-[28rem] max-w-[90vw] max-h-[70vh] overflow-y-auto overscroll-contain p-4">
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Evaluation Scorecard</div>
                   <div className="space-y-2 text-xs">
                     {evaluation.scorecard.map((item, i) => {
