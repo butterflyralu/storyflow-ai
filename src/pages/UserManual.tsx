@@ -105,12 +105,22 @@ const sections: Section[] = [
     icon: ClipboardCheck,
     title: '4. Quality evaluation',
     intro:
-      'Every story is scored against INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable) and Definition of Ready criteria.',
+      'Every story is scored against INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable) and your team\'s Definition of Ready criteria.',
     steps: [
       {
         title: 'Read the scorecard',
         body:
-          'Each criterion shows PASS or FAIL with an explanation. Inline amber banners appear on the parts of the story that need work.',
+          'Each criterion gets one of three verdicts: **Pass** (green check), **Pass with caveat** (amber "!", the criterion is met but with a noted limitation), or **Fail** (red X). The summary line shows them as separate counts — e.g. "3 passed · 2 with caveats · 1 failed" — and the caveats segment is hidden when there are none.',
+      },
+      {
+        title: 'Inspect rationale',
+        body:
+          'Click any non-pass criterion to open a popover with the AI\'s reasoning. Inline amber banners also appear on the specific parts of the story that need work.',
+      },
+      {
+        title: 'Customize Definition of Ready',
+        body:
+          'Open **Product Context** and scroll to **Definition of Ready Rules**. Each context is seeded with the defaults (Acceptance Criteria, Description) — rename, edit, delete, or add your own rules (name + short description). The active context\'s rules are used on every evaluation.',
       },
       {
         title: 'Apply suggestions',

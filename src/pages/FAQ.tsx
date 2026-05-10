@@ -29,7 +29,15 @@ const faqs = [
     items: [
       {
         q: 'How does story evaluation work?',
-        a: 'After the draft is ready, the agent runs a **quality evaluation** against INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable) and Definition of Ready criteria. You see a scorecard with PASS/FAIL per criterion and inline amber annotations on the parts of the story that need work, with a one-click "Apply" to accept the suggested improvement.',
+        a: 'After the draft is ready, the agent runs a **quality evaluation** against INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable) and your team\'s Definition of Ready criteria. You see a scorecard with **three possible verdicts** per criterion — **Pass**, **Pass with caveat**, or **Fail** — plus inline annotations on the parts of the story that need work, with a one-click "Apply" to accept the suggested improvement.',
+      },
+      {
+        q: 'What does "Pass with caveat" mean?',
+        a: 'It is the middle verdict between Pass and Fail. The story **meets the criterion**, but with a noted limitation, soft dependency, or condition the team should be aware of (for example, an assumed integration that exists but should be confirmed). The summary count shows it as a separate category — e.g. "3 passed · 2 with caveats · 1 failed" — and the "with caveats" segment is hidden when there are none.',
+      },
+      {
+        q: 'Can I customize the Definition of Ready criteria?',
+        a: 'Yes. Open **Product Context** in the sidebar and scroll to **Definition of Ready Rules**. Each context comes seeded with the two defaults (Acceptance Criteria, Description) which you can rename, edit, delete, or extend with your own rules (name + short description). The evaluator uses the rules of the **active product context** on every evaluation, so different products can have different DoR.',
       },
       {
         q: 'What if I refresh during evaluation, or want to re-run it?',
