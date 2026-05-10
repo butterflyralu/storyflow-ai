@@ -360,7 +360,16 @@ export function AppSidebar() {
                         ) : (
                           <div className="flex items-center gap-1 min-w-0 w-full">
                             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                              <span className="truncate text-sm">{session.title}</span>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {(() => {
+                                  const st = getEvalStatus(session.evaluation_status);
+                                  const show = session.has_story || session.evaluation_status;
+                                  return show ? (
+                                    <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', st.dotClass)} title={st.tooltip} />
+                                  ) : null;
+                                })()}
+                                <span className="truncate text-sm">{session.title}</span>
+                              </div>
                               <span className="text-[10px] text-muted-foreground">
                                 {formatDate(session.updated_at)}
                               </span>
