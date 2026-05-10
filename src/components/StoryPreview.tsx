@@ -337,6 +337,12 @@ export function StoryPreview() {
               </Popover>
             )}
             <Badge variant="outline">{story.metadata.priority || 'Medium'}</Badge>
+            {!evaluation && story.title && (
+              <Button size="sm" variant="outline" onClick={handleEvaluate} disabled={evaluating} className="h-8 gap-1.5 px-3 text-xs font-semibold">
+                <Sparkles className="h-3.5 w-3.5" />
+                {evaluating ? 'Evaluating...' : 'Evaluate'}
+              </Button>
+            )}
             {story.title && (
               <>
                 <DropdownMenu>
