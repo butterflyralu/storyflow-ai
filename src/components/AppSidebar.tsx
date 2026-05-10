@@ -45,19 +45,22 @@ import { cn } from '@/lib/utils';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { getEvalStatus } from '@/lib/evalStatus';
 
 interface SavedSession {
   id: string;
   title: string;
   created_at: string;
   updated_at: string;
+  evaluation_status?: 'PASS' | 'FAIL' | null;
+  has_story?: boolean;
 }
 
 interface EpicWithStories {
   id: string;
   title: string;
   created_at: string;
-  stories: Array<{ id: string; title: string; created_at: string }>;
+  stories: Array<{ id: string; title: string; created_at: string; evaluation_result?: 'PASS' | 'FAIL' | null }>;
 }
 
 export function AppSidebar() {
