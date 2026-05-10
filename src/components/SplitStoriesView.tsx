@@ -46,8 +46,14 @@ function StoryCard({
     }
   };
 
-  const passCount = evaluation?.scorecard.filter(c => c.result === 'PASS').length ?? 0;
-  const totalCriteria = evaluation?.scorecard.length ?? 0;
+  const passed = evaluation?.scorecard.filter(c => c.result === 'PASS').length ?? 0;
+  const caveats = evaluation?.scorecard.filter(c => c.result === 'PASS_WITH_CAVEAT').length ?? 0;
+  const failed = evaluation?.scorecard.filter(c => c.result === 'FAIL').length ?? 0;
+  const summary = [
+    passed > 0 && `${passed} passed`,
+    caveats > 0 && `${caveats} with caveats`,
+    failed > 0 && `${failed} failed`,
+  ].filter(Boolean).join(' · ');
 
   return (
     <>
